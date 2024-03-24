@@ -2,6 +2,7 @@
 #define VOXENTA_PROPERTIES_WINDOW_H
 
 #include <cstdio>
+#include <opencv4/opencv2/opencv.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "imgui/imgui.h"
@@ -18,6 +19,7 @@ private:
     bool m_fileDialogOpen;
     ImFileDialogInfo m_fileDialogInfo;
     bool load_image();
+    std::filesystem::path filePath;
 };
 
 

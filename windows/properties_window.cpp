@@ -20,22 +20,20 @@ void properties_window::show() {
         m_fileDialogInfo.directoryPath = std::filesystem::current_path();
     }
 
-    std::filesystem::path filePath;
     if(ImGui::FileDialog(&m_fileDialogOpen, &m_fileDialogInfo, mws))
     {
         filePath = m_fileDialogInfo.resultPath;
     }
 
+    if(!filePath.empty())
+        load_image();
+
     ImGui::End();
 }
 
 bool properties_window::load_image() {
-//    int image_width = 0;
-//    int image_height = 0;
-//    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-//    if (image_data == NULL)
-//        return false;
-    return false;
+    cv::Mat image = cv::imread(filePath.c_str());
+   return false;
 }
 
 void properties_window::set_mws(ImVec2 size) {

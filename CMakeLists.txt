@@ -23,6 +23,11 @@ add_executable(${APP_TARGET} main.cpp
         windows/output_img_window.h)
 target_link_libraries(${APP_TARGET} imgui)
 
+# opencv
+#set(OpenCV_LIBRARIES ${OpenCV_LIBS})
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 # glfw
 find_package(glfw3 REQUIRED)
 include_directories(${GLFW_INCLUDE_DIRS})
@@ -42,4 +47,5 @@ target_link_libraries(
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         ${EXTRA_LIBS}
+        ${OpenCV_LIBS}
 )
