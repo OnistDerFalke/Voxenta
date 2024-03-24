@@ -15,6 +15,7 @@
 #include "imgui.h"
 
 #include "imgui_filedialog.h"
+#include "imgui_internal.h"
 
 using namespace std::chrono_literals;
 
@@ -45,6 +46,17 @@ void RefreshInfo(ImFileDialogInfo* dialogInfo)
 			dialogInfo->currentFiles.push_back(entry);
 		}
 	}
+}
+
+bool ImGui::IsFileImage(const std::filesystem::path& p) {
+    std::vector<std::string> available_extensions = {".jpg", ".JPG", ".png", ".PNG"};
+
+    for (const auto& ext : available_extensions) {
+        if(p.has_extension())
+            if(p.extension() == ext)
+                return true;
+    }
+    return false;
 }
 
 bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
@@ -283,6 +295,9 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 			auto filePath = fileEntry.path();
 			auto fileName = filePath.filename();
 
+            if(!std::filesystem::exists(filePath))
+                continue;
+
 			if (ImGui::Selectable(fileName.string().c_str(), dialogInfo->currentIndex == index, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(ImGui::GetWindowContentRegionWidth(), 0)))
 			{
 				dialogInfo->currentIndex = index;
@@ -347,26 +362,35 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 
 		if (dialogInfo->type == ImGuiFileDialogType_OpenFile)
 		{
-			if (ImGui::Button("Open"))
-			{
-				dialogInfo->resultPath = dialogInfo->directoryPath / dialogInfo->fileName;
+            dialogInfo->resultPath = dialogInfo->directoryPath / dialogInfo->fileName;
+            if(ImGui::IsFileImage(dialogInfo->resultPath)) {
+                if (ImGui::Button("Load")) {
+                    if (std::filesystem::exists(dialogInfo->resultPath)) {
+                        fileNameSortOrder = ImGuiFileDialogSortOrder_None;
+                        sizeSortOrder = ImGuiFileDialogSortOrder_None;
+                        typeSortOrder = ImGuiFileDialogSortOrder_None;
+                        dateSortOrder = ImGuiFileDialogSortOrder_None;
 
-				if (std::filesystem::exists(dialogInfo->resultPath))
-				{
-					fileNameSortOrder = ImGuiFileDialogSortOrder_None;
-					sizeSortOrder = ImGuiFileDialogSortOrder_None;
-					typeSortOrder = ImGuiFileDialogSortOrder_None;
-					dateSortOrder = ImGuiFileDialogSortOrder_None;
+                        dialogInfo->refreshInfo = false;
+                        dialogInfo->currentIndex = 0;
+                        dialogInfo->currentFiles.clear();
+                        dialogInfo->currentDirectories.clear();
 
-					dialogInfo->refreshInfo = false;
-					dialogInfo->currentIndex = 0;
-					dialogInfo->currentFiles.clear();
-					dialogInfo->currentDirectories.clear();
-
-					complete = true;
-					*open = false;
-				}
-			}
+                        complete = true;
+                        *open = false;
+                    }
+                }
+            }
+            else {
+                ImVec4* c = ImGui::GetStyle().Colors;
+                c[ImGuiCol_Button] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+                c[ImGuiCol_ButtonHovered] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+                c[ImGuiCol_ButtonActive] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+                ImGui::Button("Load");
+                c[ImGuiCol_Button] = ImVec4(0.50f, 0.50f, 0.50f, 0.63f);
+                c[ImGuiCol_ButtonHovered] = ImVec4(0.67f, 0.67f, 0.68f, 0.63f);
+                c[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.26f, 0.26f, 0.63f);
+            }
 		}
 		else if (dialogInfo->type == ImGuiFileDialogType_SaveFile)
 		{
@@ -401,3 +425,4 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 
 	return complete;
 }
+

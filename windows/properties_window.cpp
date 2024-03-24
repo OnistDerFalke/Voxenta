@@ -14,14 +14,17 @@ void properties_window::show() {
 
     if (ImGui::Button("Load image")) {
         m_fileDialogOpen = true;
-        m_fileDialogInfo.type = ImGuiFileDialogType_SaveFile;
+        m_fileDialogInfo.type = ImGuiFileDialogType_OpenFile;
         m_fileDialogInfo.title = "Load image";
         m_fileDialogInfo.fileName = "";
         m_fileDialogInfo.directoryPath = std::filesystem::current_path();
     }
 
-    if(m_fileDialogOpen)
-        ImGui::FileDialog(&m_fileDialogOpen, &m_fileDialogInfo, mws);
+    std::filesystem::path filePath;
+    if(ImGui::FileDialog(&m_fileDialogOpen, &m_fileDialogInfo, mws))
+    {
+        filePath = m_fileDialogInfo.resultPath;
+    }
 
     ImGui::End();
 }

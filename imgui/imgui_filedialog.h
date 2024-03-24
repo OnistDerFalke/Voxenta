@@ -38,4 +38,5 @@ struct ImFileDialogInfo
 namespace ImGui
 {
 	IMGUI_API bool FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws);
+    IMGUI_API bool IsFileImage(const std::filesystem::path& p);
 }

@@ -10,7 +10,7 @@
 
 class properties_window {
 public:
-    properties_window(ImVec2 mws);
+    explicit properties_window(ImVec2 mws);
     void set_mws(ImVec2 size);
     void show();
 private:
