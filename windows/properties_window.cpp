@@ -6,36 +6,40 @@ properties_window::properties_window(ImVec2 mws)
 }
 
 void properties_window::show() {
+
+    just_uploaded = false;
+
+    //Setting new position and size
     auto border = std::min(mws.x, mws.y) * 0.01f;
     ImGui::SetNextWindowPos(ImVec2(border, mws.y*2/3));
     ImGui::SetNextWindowSize(ImVec2(mws.x-2*border, (mws.y-3*border)*1/3));
+
+    //Setting context
     ImGui::Begin("Properties", nullptr,
                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-
     if (ImGui::Button("Load image")) {
-        m_fileDialogOpen = true;
-        m_fileDialogInfo.type = ImGuiFileDialogType_OpenFile;
-        m_fileDialogInfo.title = "Load image";
-        m_fileDialogInfo.fileName = "";
-        m_fileDialogInfo.directoryPath = std::filesystem::current_path();
+        m_file_dialog_open = true;
+        m_file_dialog_info.type = ImGuiFileDialogType_OpenFile;
+        m_file_dialog_info.title = "Load image";
+        m_file_dialog_info.fileName = "";
+        m_file_dialog_info.directoryPath = std::filesystem::current_path();
     }
+    if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
+        file_path = m_file_dialog_info.resultPath;
+        just_uploaded = true;
 
-    if(ImGui::FileDialog(&m_fileDialogOpen, &m_fileDialogInfo, mws))
-    {
-        filePath = m_fileDialogInfo.resultPath;
+        //Generating image from chosen file
+        if(!file_path.empty()) {
+            base_image = cv::imread(file_path.c_str());
+        }
     }
-
-    if(!filePath.empty())
-        load_image();
-
     ImGui::End();
-}
-
-bool properties_window::load_image() {
-    cv::Mat image = cv::imread(filePath.c_str());
-   return false;
 }
 
 void properties_window::set_mws(ImVec2 size) {
     this->mws = size;
+}
+
+cv::Mat properties_window::get_base_image() {
+    return base_image;
 }

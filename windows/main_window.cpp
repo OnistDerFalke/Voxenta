@@ -60,46 +60,52 @@ void set_ui_style()
 }
 
 main_window::main_window() {
+
+    //Error callback for OpenGL
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
        return;
 
-    //Main window things
+    //Main window in OpenGL
     GLFWwindow* window = glfwCreateWindow(
             1280, 720, "Voxenta", nullptr, nullptr);
 
-    ImVec4 clear_color = ImColor(60, 60 , 60);
+    //Initialize OpenGL
     glfwMakeContextCurrent(window);
     glewInit();
     ImGui_ImplGlfwGL3_Init(window, true);
 
+    //Setting style for the application
     set_ui_style();
 
+    //Creating sub-windows in main window
     auto inputWindow = input_img_window(get_window_size(window));
     auto outputWindow = output_img_window(get_window_size(window));
-    //auto outputWindow = input_img_window(mws);
-    properties_window propertiesWindow = properties_window(get_window_size(window));
+    auto propertiesWindow = properties_window(get_window_size(window));
 
     //Main loop
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplGlfwGL3_NewFrame();
 
+        //Resizing windows on update
         inputWindow.set_mws(get_window_size(window));
         outputWindow.set_mws(get_window_size(window));
         propertiesWindow.set_mws(get_window_size(window));
-        inputWindow.show();
-        outputWindow.show();
+
+        //Showing updated windows
+        inputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
+        outputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
         propertiesWindow.show();
 
         //Rendering
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
+        ImVec4 clear_color = ImColor(60, 60 , 60);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui::Render();
-
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
