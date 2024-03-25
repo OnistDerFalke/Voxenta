@@ -1,8 +1,16 @@
 #include "properties_window.h"
+#include "imgui/imgui_internal.h"
+#include "processing/image_processor.h"
+#include "processing/processing_ui.h"
 
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
+    this->proc_ui = processing_ui();
+    this->processor = image_processor();
+
+    //Available features
+    this->features[0] = const_cast<char*>("Brightness");
 }
 
 void properties_window::show() {
@@ -24,6 +32,18 @@ void properties_window::show() {
         m_file_dialog_info.fileName = "";
         m_file_dialog_info.directoryPath = std::filesystem::current_path();
     }
+    ImGui::Dummy(ImVec2(0, 5));
+
+    int selectedItemIndex = 0;
+    ImGui::Text("Effect: ");
+    ImGui::SameLine();
+    ImGui::Combo("##combo", &selectedItemIndex, features, IM_ARRAYSIZE(features));
+    ImGui::Dummy(ImVec2(0, 10));
+    ImGui::Text("Effect properties:");
+    ImGui::Dummy(ImVec2(0, 5));
+
+    processing_data data = proc_ui.run_method(selectedItemIndex);
+
     if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
         file_path = m_file_dialog_info.resultPath;
         just_uploaded = true;
@@ -33,6 +53,7 @@ void properties_window::show() {
             base_image = cv::imread(file_path.c_str());
         }
     }
+    modified_image = processor.process_image(base_image, selectedItemIndex, data);
     ImGui::End();
 }
 
@@ -42,4 +63,8 @@ void properties_window::set_mws(ImVec2 size) {
 
 cv::Mat properties_window::get_base_image() {
     return base_image;
+}
+
+cv::Mat properties_window::get_modified_image() {
+    return modified_image;
 }

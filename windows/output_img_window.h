@@ -16,9 +16,9 @@ public:
     void show(cv::Mat image, bool just_uploaded);
 private:
     ImVec2 mws;
-    void* image_texture;
+    void* image_texture{};
     cv::Size image_size;
-    bool need_update;
+    bool need_update{};
 };
 
 

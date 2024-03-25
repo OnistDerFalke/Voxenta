@@ -95,7 +95,7 @@ main_window::main_window() {
 
         //Showing updated windows
         inputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
-        outputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
+        outputWindow.show(propertiesWindow.get_modified_image(), true);
         propertiesWindow.show();
 
         //Rendering

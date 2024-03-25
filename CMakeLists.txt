@@ -20,7 +20,15 @@ add_executable(${APP_TARGET} main.cpp
         windows/properties_window.h
         imgui/imgui_filedialog.cpp
         windows/output_img_window.cpp
-        windows/output_img_window.h)
+        windows/output_img_window.h
+        processing/image_processor.cpp
+        processing/image_processor.h
+        processing/processing_data.cpp
+        processing/processing_data.h
+        processing/processing_methods.cpp
+        processing/processing_methods.h
+        processing/processing_ui.cpp
+        processing/processing_ui.h)
 target_link_libraries(${APP_TARGET} imgui)
 
 # opencv
