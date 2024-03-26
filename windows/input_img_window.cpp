@@ -16,7 +16,7 @@ void input_img_window::show(cv::Mat image, bool just_uploaded) {
     //Setting context
     ImGui::Begin("Input image", nullptr,
                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_ShowBorders);
     if(!image.empty()) {
         if(just_uploaded || need_update) {
 

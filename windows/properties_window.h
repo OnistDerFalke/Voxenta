@@ -29,6 +29,7 @@ private:
     processing_ui proc_ui;
     image_processor processor;
     const char* features[1];
+    int selected_item = 0;
 };
 
 

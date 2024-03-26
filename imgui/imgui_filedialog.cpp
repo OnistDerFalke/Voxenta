@@ -79,10 +79,8 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
     ImGui::SetNextWindowPos(ImVec2(mws.x/2 - mws.x/3, mws.y/2-mws.y/4));
 	ImGui::SetNextWindowSize(ImVec2(mws.x*2/3, mws.y/2));
 
-    ImVec4* colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.16f, 0.16f, 1.00f);
     ImGui::SetNextWindowFocus();
-	if (ImGui::Begin(dialogInfo->title.c_str(), open))
+	if (ImGui::Begin(dialogInfo->title.c_str(), open, ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_NoResize ))
 	{
 		if (dialogInfo->currentFiles.empty() && dialogInfo->currentDirectories.empty() || dialogInfo->refreshInfo)
 			RefreshInfo(dialogInfo);
@@ -419,9 +417,6 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 
 	ImGui::End();
 	ImGui::PopID();
-
-    colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_WindowBg] = ImVec4(0.13f, 0.12f, 0.12f, 1.00f);
 
 	return complete;
 }

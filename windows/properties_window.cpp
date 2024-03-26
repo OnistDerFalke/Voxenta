@@ -19,30 +19,55 @@ void properties_window::show() {
 
     //Setting new position and size
     auto border = std::min(mws.x, mws.y) * 0.01f;
-    ImGui::SetNextWindowPos(ImVec2(border, mws.y*2/3));
-    ImGui::SetNextWindowSize(ImVec2(mws.x-2*border, (mws.y-3*border)*1/3));
+    auto input_window_pos = ImVec2(border, mws.y*2/3);
+    auto input_window_size = ImVec2(mws.x-2*border, (mws.y-3*border)*1/3);
+    ImGui::SetNextWindowPos(input_window_pos);
+    ImGui::SetNextWindowSize(input_window_size);
 
-    //Setting context
-    ImGui::Begin("Properties", nullptr,
-                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-    if (ImGui::Button("Load image")) {
-        m_file_dialog_open = true;
-        m_file_dialog_info.type = ImGuiFileDialogType_OpenFile;
-        m_file_dialog_info.title = "Load image";
-        m_file_dialog_info.fileName = "";
-        m_file_dialog_info.directoryPath = std::filesystem::current_path();
+    //Context
+    ImGui::Begin(" Properties", nullptr,
+                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_MenuBar);
+
+    //Main menu
+    ImGui::BeginMenuBar();
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Load", "Ctrl+O")) {
+            m_file_dialog_open = true;
+            m_file_dialog_info.type = ImGuiFileDialogType_OpenFile;
+            m_file_dialog_info.title = "Load image";
+            m_file_dialog_info.fileName = "";
+            m_file_dialog_info.directoryPath = std::filesystem::current_path();
+        }
+        if (ImGui::MenuItem("Save", "Ctrl+S")) {
+            // Obsługa zapisywania pliku
+        }
+        ImGui::EndMenu();
     }
-    ImGui::Dummy(ImVec2(0, 5));
+    if (ImGui::BeginMenu("About")) {
+        if (ImGui::MenuItem("About Program")) {
+            // Pokaż informacje o programie
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMenuBar();
 
-    int selectedItemIndex = 0;
-    ImGui::Text("Effect: ");
-    ImGui::SameLine();
-    ImGui::Combo("##combo", &selectedItemIndex, features, IM_ARRAYSIZE(features));
-    ImGui::Dummy(ImVec2(0, 10));
+    //Effect combo
+    ImGui::BeginChild("effect_choice",
+                      ImVec2((input_window_size.x)/2.0f-5.0f/4.0f * ImGui::GetStyle().ItemSpacing.x,20));
+    ImGui::Combo("##combo", &selected_item, features, IM_ARRAYSIZE(features));
+    ImGui::EndChild();
+    ImGui::Dummy(ImVec2(0, 2));
+
+    //Properties of effect
+    ImGui::BeginChild("properties",
+                      ImVec2((input_window_size.x)/2.0f-5.0f/4.0f * ImGui::GetStyle().ItemSpacing.x,
+                                             input_window_size.y-80), true);
+
     ImGui::Text("Effect properties:");
     ImGui::Dummy(ImVec2(0, 5));
 
-    processing_data data = proc_ui.run_method(selectedItemIndex);
+    processing_data data = proc_ui.run_method(selected_item);
 
     if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
         file_path = m_file_dialog_info.resultPath;
@@ -53,7 +78,20 @@ void properties_window::show() {
             base_image = cv::imread(file_path.c_str());
         }
     }
-    modified_image = processor.process_image(base_image, selectedItemIndex, data);
+    modified_image = processor.process_image(base_image, selected_item, data);
+
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+    ImGui::BeginChild("description",
+                      ImVec2((input_window_size.x)/2.0f - 3.5f/2.0f * ImGui::GetStyle().ItemSpacing.x,
+                             input_window_size.y-80), true);
+
+    ImGui::Text("Description:");
+    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::Text("%s", data.description);
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
     ImGui::End();
 }
 
