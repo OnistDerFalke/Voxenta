@@ -14,6 +14,8 @@ class main_window {
 public:
     main_window();
 private:
+    bool window_resized(GLFWwindow* window) const;
+    ImVec2 latest_size;
     static void error_callback(int error, const char* description);
 };
 

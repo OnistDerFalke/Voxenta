@@ -17,6 +17,7 @@ properties_window::properties_window(ImVec2 mws)
 void properties_window::show() {
 
     just_uploaded = false;
+    just_updated = false;
 
     //Setting new position and size
     auto border = std::min(mws.x, mws.y) * 0.01f;
@@ -98,7 +99,8 @@ void properties_window::show() {
             }
         }
     }
-    modified_image = processor.process_image(base_image, selected_item, data);
+    modified_image = processor.process_image(base_image, selected_item, data, just_uploaded);
+    just_updated = processor.did_update();
 
     ImGui::EndChild();
     ImGui::SameLine();

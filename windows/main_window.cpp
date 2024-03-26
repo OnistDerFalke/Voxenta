@@ -12,6 +12,12 @@ ImVec2 get_window_size(GLFWwindow* window)
     return {(float)width, (float)height};
 }
 
+bool main_window::window_resized(GLFWwindow* window) const {
+    if(get_window_size(window).x != latest_size.x) return true;
+    if(get_window_size(window).y != latest_size.y) return true;
+    return false;
+}
+
 void set_ui_style()
 {
     ImGuiStyle& st = ImGui::GetStyle();
@@ -91,13 +97,15 @@ main_window::main_window() {
         ImGui_ImplGlfwGL3_NewFrame();
 
         //Resizing windows on update
-        inputWindow.set_mws(get_window_size(window));
-        outputWindow.set_mws(get_window_size(window));
-        propertiesWindow.set_mws(get_window_size(window));
+        if(window_resized(window)) {
+            inputWindow.set_mws(get_window_size(window));
+            outputWindow.set_mws(get_window_size(window));
+            propertiesWindow.set_mws(get_window_size(window));
+        }
 
         //Showing updated windows
         inputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
-        outputWindow.show(propertiesWindow.get_modified_image(), true);
+        outputWindow.show(propertiesWindow.get_modified_image(), propertiesWindow.just_updated);
         propertiesWindow.show();
 
         //Rendering
@@ -108,6 +116,8 @@ main_window::main_window() {
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui::Render();
+
+        latest_size = get_window_size(window);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

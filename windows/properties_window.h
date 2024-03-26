@@ -20,6 +20,7 @@ public:
     cv::Mat get_modified_image();
     void show();
     bool just_uploaded{};
+    bool just_updated{};
 private:
     ImVec2 mws;
     bool m_file_dialog_open{};

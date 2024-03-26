@@ -7,6 +7,7 @@ public:
     int _intVal;
     double _doubleVal;
     char* description;
+    bool compare(processing_data data);
 private:
 };
 
