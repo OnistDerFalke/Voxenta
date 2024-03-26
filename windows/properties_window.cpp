@@ -2,6 +2,7 @@
 #include "imgui/imgui_internal.h"
 #include "processing/image_processor.h"
 #include "processing/processing_ui.h"
+#include "about_window.h"
 
 properties_window::properties_window(ImVec2 mws)
 {
@@ -46,11 +47,13 @@ void properties_window::show() {
     }
     if (ImGui::BeginMenu("About")) {
         if (ImGui::MenuItem("About Program")) {
-            // Pokaż informacje o programie
+            m_about_dialog_open = true;
         }
         ImGui::EndMenu();
     }
     ImGui::EndMenuBar();
+
+    about.show(&m_about_dialog_open, mws);
 
     //Effect combo
     ImGui::BeginChild("effect_choice",

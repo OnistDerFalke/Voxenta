@@ -66,6 +66,8 @@ main_window::main_window() {
     if (!glfwInit())
        return;
 
+    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+
     //Main window in OpenGL
     GLFWwindow* window = glfwCreateWindow(
             1280, 720, "Voxenta", nullptr, nullptr);

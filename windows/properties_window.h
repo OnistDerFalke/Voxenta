@@ -10,6 +10,7 @@
 #include "imgui/imgui_filedialog.h"
 #include "processing/processing_ui.h"
 #include "processing/image_processor.h"
+#include "about_window.h"
 
 class properties_window {
 public:
@@ -22,7 +23,9 @@ public:
 private:
     ImVec2 mws;
     bool m_file_dialog_open;
+    bool m_about_dialog_open;
     ImFileDialogInfo m_file_dialog_info;
+    about_window about;
     std::filesystem::path file_path;
     cv::Mat base_image;
     cv::Mat modified_image;
