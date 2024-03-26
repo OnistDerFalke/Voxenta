@@ -12,6 +12,8 @@ properties_window::properties_window(ImVec2 mws)
 
     //Available features
     this->features[0] = const_cast<char*>("Brightness");
+    this->features[1] = const_cast<char*>("Contrast");
+    this->features[2] = const_cast<char*>("Negative");
 }
 
 void properties_window::show() {

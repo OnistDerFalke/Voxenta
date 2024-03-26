@@ -11,6 +11,8 @@ public:
     cv::Mat run_method(cv::Mat image, int index, processing_data data);
 private:
     cv::Mat brightness(cv::Mat image, int val);
+    cv::Mat contrast(cv::Mat image, float val);
+    cv::Mat negative(cv::Mat image);
 };
 
 

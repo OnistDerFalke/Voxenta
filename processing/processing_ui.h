@@ -7,10 +7,13 @@
 class processing_ui {
 public:
     processing_ui();
-    processing_data  run_method(int index);
+    processing_data run_method(int index);
 private:
-    processing_data  brightness();
+    processing_data brightness();
+    processing_data contrast();
+    processing_data negative();
     int _intMem;
+    float _floatMem;
 };
 
 
