@@ -19,11 +19,11 @@ public:
     cv::Mat get_base_image();
     cv::Mat get_modified_image();
     void show();
-    bool just_uploaded;
+    bool just_uploaded{};
 private:
     ImVec2 mws;
-    bool m_file_dialog_open;
-    bool m_about_dialog_open;
+    bool m_file_dialog_open{};
+    bool m_about_dialog_open{};
     ImFileDialogInfo m_file_dialog_info;
     about_window about;
     std::filesystem::path file_path;
@@ -31,7 +31,7 @@ private:
     cv::Mat modified_image;
     processing_ui proc_ui;
     image_processor processor;
-    const char* features[1];
+    const char* features[1]{};
     int selected_item = 0;
 };
 

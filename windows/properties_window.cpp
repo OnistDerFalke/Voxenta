@@ -41,7 +41,14 @@ void properties_window::show() {
             m_file_dialog_info.directoryPath = std::filesystem::current_path();
         }
         if (ImGui::MenuItem("Save", "Ctrl+S")) {
-            // Obsługa zapisywania pliku
+            if(!modified_image.empty())
+            {
+                m_file_dialog_open = true;
+                m_file_dialog_info.type = ImGuiFileDialogType_SaveFile;
+                m_file_dialog_info.title = "Save image";
+                m_file_dialog_info.fileName = "";
+                m_file_dialog_info.directoryPath = std::filesystem::current_path();
+            }
         }
         ImGui::EndMenu();
     }
@@ -74,11 +81,21 @@ void properties_window::show() {
 
     if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
         file_path = m_file_dialog_info.resultPath;
-        just_uploaded = true;
+
+        //Saving file from obtained image
+        if(m_file_dialog_info.type == ImGuiFileDialogType_SaveFile)
+        {
+            if (!file_path.empty() && (!modified_image.empty())) {
+               cv::imwrite(file_path.c_str(), modified_image);
+            }
+        }
 
         //Generating image from chosen file
-        if(!file_path.empty()) {
-            base_image = cv::imread(file_path.c_str());
+        if(m_file_dialog_info.type == ImGuiFileDialogType_OpenFile) {
+            just_uploaded = true;
+            if (!file_path.empty()) {
+                base_image = cv::imread(file_path.c_str());
+            }
         }
     }
     modified_image = processor.process_image(base_image, selected_item, data);
