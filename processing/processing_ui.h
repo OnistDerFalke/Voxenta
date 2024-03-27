@@ -12,8 +12,10 @@ private:
     processing_data brightness();
     processing_data contrast();
     processing_data negative();
-    int _intMem;
-    float _floatMem;
+    processing_data gaussian_blur();
+    std::vector<int> _intMem{};
+    std::vector<float> _floatMem{};
+    std::vector<double> _doubleMem{};
 };
 
 

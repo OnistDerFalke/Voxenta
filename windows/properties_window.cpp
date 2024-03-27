@@ -7,6 +7,7 @@
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
+    this->data = processing_data();
     this->proc_ui = processing_ui();
     this->processor = image_processor();
 
@@ -14,6 +15,7 @@ properties_window::properties_window(ImVec2 mws)
     this->features[0] = const_cast<char*>("Brightness");
     this->features[1] = const_cast<char*>("Contrast");
     this->features[2] = const_cast<char*>("Negative");
+    this->features[3] = const_cast<char*>("Gaussian Blur");
 }
 
 void properties_window::show() {
@@ -65,11 +67,14 @@ void properties_window::show() {
 
     about.show(&m_about_dialog_open, mws);
 
-    //Effect combo
-    ImGui::BeginChild("effect_choice",
-                      ImVec2((input_window_size.x)/2.0f-5.0f/4.0f * ImGui::GetStyle().ItemSpacing.x,20));
-    ImGui::Combo("##combo", &selected_item, features, IM_ARRAYSIZE(features));
-    ImGui::EndChild();
+    if(!base_image.empty()) {
+        //Effect combo
+        ImGui::BeginChild("effect_choice",
+                          ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
+        ImGui::Combo("##combo", &selected_item, features, IM_ARRAYSIZE(features));
+        ImGui::EndChild();
+    }
+
     ImGui::Dummy(ImVec2(0, 2));
 
     //Properties of effect
@@ -80,7 +85,8 @@ void properties_window::show() {
     ImGui::Text("Effect properties:");
     ImGui::Dummy(ImVec2(0, 5));
 
-    processing_data data = proc_ui.run_method(selected_item);
+    if(!base_image.empty())
+        data = proc_ui.run_method(selected_item);
 
     if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
         file_path = m_file_dialog_info.resultPath;
@@ -101,7 +107,9 @@ void properties_window::show() {
             }
         }
     }
-    modified_image = processor.process_image(base_image, selected_item, data, just_uploaded);
+
+    if(!base_image.empty())
+        modified_image = processor.process_image(base_image, selected_item, data, just_uploaded);
     just_updated = processor.did_update();
 
     ImGui::EndChild();
@@ -113,7 +121,9 @@ void properties_window::show() {
 
     ImGui::Text("Description:");
     ImGui::Dummy(ImVec2(0, 5));
-    ImGui::Text("%s", data.description);
+    if(base_image.empty())
+        ImGui::Text("%s", "Load the image first to apply any effects.");
+    else ImGui::Text("%s", data.description);
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();

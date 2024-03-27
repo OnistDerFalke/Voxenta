@@ -32,7 +32,8 @@ private:
     cv::Mat modified_image;
     processing_ui proc_ui;
     image_processor processor;
-    const char* features[3]{};
+    processing_data data;
+    const char* features[4]{};
     int selected_item = 0;
 };
 
