@@ -33,7 +33,7 @@ private:
     processing_ui proc_ui;
     image_processor processor;
     processing_data data;
-    const char* features[4]{};
+    const char* features[6]{};
     int selected_item = 0;
 };
 

@@ -9,6 +9,7 @@
 #include "input_img_window.h"
 #include "output_img_window.h"
 #include "properties_window.h"
+#include "win_prop.h"
 
 class main_window {
 public:
@@ -16,7 +17,9 @@ public:
 private:
     bool window_resized(GLFWwindow* window) const;
     ImVec2 latest_size;
+    bool latest_maximize_flag;
     static void error_callback(int error, const char* description);
+    static void window_maximize_callback(GLFWwindow* window, int maximized);
 };
 
 

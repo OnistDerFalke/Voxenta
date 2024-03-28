@@ -5,6 +5,8 @@ processing_methods::processing_methods(){
     functions.push_back(&processing_methods::brightness);
     functions.push_back(&processing_methods::contrast);
     functions.push_back(&processing_methods::negative);
+    functions.push_back(&processing_methods::grayscale);
+    functions.push_back(&processing_methods::binarization);
     functions.push_back(&processing_methods::gaussian_blur);
 };
 
@@ -51,16 +53,34 @@ cv::Mat processing_methods::negative(cv::Mat image, processing_data data) {
     return final_image;
 }
 
+cv::Mat processing_methods::grayscale(cv::Mat image, processing_data data) {
+    cv::Mat final_image = cv::Mat::zeros( image.size(), image.type() );;
+    for( int y = 0; y < image.rows; y++ ) {
+        for( int x = 0; x < image.cols; x++ ) {
+            for( int c = 0; c < image.channels(); c++ ) {
+                float pixel_value = 0;
+                for(int i = 0; i < 3; i++)
+                    pixel_value += (float)image.at<cv::Vec3b>(y,x)[i] * data._floatVal[i];
+                final_image.at<cv::Vec3b>(y,x)[c] = cv::saturate_cast<uchar>( (int)pixel_value);
+            }
+        }
+    }
+    return final_image;
+}
+
+cv::Mat processing_methods::binarization(cv::Mat image, processing_data data) {
+    cv::Mat final_image = cv::Mat();
+    cv::Mat grayscale_image = cv::Mat();
+    cv::cvtColor(image, grayscale_image, cv::COLOR_BGR2GRAY);
+    if(data._intVal[0] == 0)
+        cv::threshold(grayscale_image, final_image, data._intVal[1], data._intVal[2], cv::THRESH_BINARY);
+    return final_image;
+}
+
 cv::Mat processing_methods::gaussian_blur(cv::Mat image, processing_data data) {
     cv::Mat final_image = cv::Mat();
-
-    if((data._intVal[0]%2 == 0 && data._intVal[0]!=0) || (data._intVal[1]%2 == 0 && data._intVal[1]!=0)) return image; //odd check
-    if(data._intVal[0]<0 || data._intVal[1]<0 ) return image; //positive check
-
     cv::GaussianBlur(image, final_image,
                          cv::Size(data._intVal[0], data._intVal[1]),
                          data._doubleVal[0], data._doubleVal[1], data._intVal[2]);
-
-
     return final_image;
 }

@@ -16,6 +16,8 @@ private:
     cv::Mat brightness(cv::Mat image, processing_data data);
     cv::Mat contrast(cv::Mat image, processing_data data);
     cv::Mat negative(cv::Mat image, processing_data data);
+    cv::Mat grayscale(cv::Mat image, processing_data data);
+    cv::Mat binarization(cv::Mat image, processing_data data);
     cv::Mat gaussian_blur(cv::Mat image, processing_data data);
 };
 

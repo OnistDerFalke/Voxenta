@@ -15,7 +15,9 @@ properties_window::properties_window(ImVec2 mws)
     this->features[0] = const_cast<char*>("Brightness");
     this->features[1] = const_cast<char*>("Contrast");
     this->features[2] = const_cast<char*>("Negative");
-    this->features[3] = const_cast<char*>("Gaussian Blur");
+    this->features[3] = const_cast<char*>("Grayscale");
+    this->features[4] = const_cast<char*>("Binarization");
+    this->features[5] = const_cast<char*>("Gaussian Blur");
 }
 
 void properties_window::show() {

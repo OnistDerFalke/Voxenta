@@ -5,6 +5,10 @@ void main_window::error_callback(int error, const char* description)
     fprintf(stderr, "Error %d: %s\n", error, description);
 }
 
+void main_window::window_maximize_callback(GLFWwindow* window, int maximized) {
+    win_prop::window_resized = maximized;
+}
+
 ImVec2 get_window_size(GLFWwindow* window)
 {
     int width, height;
@@ -15,6 +19,7 @@ ImVec2 get_window_size(GLFWwindow* window)
 bool main_window::window_resized(GLFWwindow* window) const {
     if(get_window_size(window).x != latest_size.x) return true;
     if(get_window_size(window).y != latest_size.y) return true;
+    if(win_prop::window_resized != latest_maximize_flag) return true;
     return false;
 }
 
@@ -78,6 +83,8 @@ main_window::main_window() {
     GLFWwindow* window = glfwCreateWindow(
             1280, 720, "Voxenta", nullptr, nullptr);
 
+    glfwSetWindowMaximizeCallback(window, window_maximize_callback);
+
     //Initialize OpenGL
     glfwMakeContextCurrent(window);
     glewInit();
@@ -118,6 +125,7 @@ main_window::main_window() {
         ImGui::Render();
 
         latest_size = get_window_size(window);
+        latest_maximize_flag = win_prop::window_resized;
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

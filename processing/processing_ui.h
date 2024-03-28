@@ -20,6 +20,8 @@ private:
     processing_data brightness();
     processing_data contrast();
     processing_data negative();
+    processing_data grayscale();
+    processing_data binarization();
     processing_data gaussian_blur();
 
 };
