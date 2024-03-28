@@ -53,8 +53,14 @@ cv::Mat processing_methods::negative(cv::Mat image, processing_data data) {
 
 cv::Mat processing_methods::gaussian_blur(cv::Mat image, processing_data data) {
     cv::Mat final_image = cv::Mat();
+
+    if((data._intVal[0]%2 == 0 && data._intVal[0]!=0) || (data._intVal[1]%2 == 0 && data._intVal[1]!=0)) return image; //odd check
+    if(data._intVal[0]<0 || data._intVal[1]<0 ) return image; //positive check
+
     cv::GaussianBlur(image, final_image,
-                     cv::Size(data._intVal[0], data._intVal[1]),
-                     data._doubleVal[0],data._doubleVal[1], data._intVal[2]);
+                         cv::Size(data._intVal[0], data._intVal[1]),
+                         data._doubleVal[0], data._doubleVal[1], data._intVal[2]);
+
+
     return final_image;
 }

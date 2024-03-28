@@ -122,8 +122,8 @@ void properties_window::show() {
     ImGui::Text("Description:");
     ImGui::Dummy(ImVec2(0, 5));
     if(base_image.empty())
-        ImGui::Text("%s", "Load the image first to apply any effects.");
-    else ImGui::Text("%s", data.description);
+        ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
+    else ImGui::TextWrapped("%s", data.description);
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();

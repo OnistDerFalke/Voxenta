@@ -94,7 +94,8 @@ processing_data processing_ui::gaussian_blur() {
     data._doubleVal[0] = static_cast<double>(_floatMem[0]);
     data._doubleVal[1] = static_cast<double>(_floatMem[1]);
     data.description = const_cast<char*>(
-            "Blurs the image using Gaussian Blur.\n\n"
-            "Solution: [TO BE DONE]");
+            "Blurs an image using a Gaussian filter. The function convolves the source image with the "
+            "specified Gaussian kernel. In-place filtering is supported.\n\n"
+            "Solution: OpenCV function (https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gaabe8c836e97159a9193fb0b11ac52cf1)");
     return data;
 }
