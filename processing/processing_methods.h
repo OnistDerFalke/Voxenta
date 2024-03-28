@@ -10,10 +10,13 @@ public:
     processing_methods();
     cv::Mat run_method(cv::Mat image, int index, processing_data data);
 private:
-    cv::Mat brightness(cv::Mat image, int val);
-    cv::Mat contrast(cv::Mat image, float val);
-    cv::Mat negative(cv::Mat image);
-    cv::Mat gaussian_blur(cv::Mat image, int kernel_width, int kernel_height, double sigma_x, double sigma_y, int border_type);
+    std::vector<cv::Mat (processing_methods::*)(cv::Mat, processing_data)> functions;
+
+    //processing methods
+    cv::Mat brightness(cv::Mat image, processing_data data);
+    cv::Mat contrast(cv::Mat image, processing_data data);
+    cv::Mat negative(cv::Mat image, processing_data data);
+    cv::Mat gaussian_blur(cv::Mat image, processing_data data);
 };
 
 

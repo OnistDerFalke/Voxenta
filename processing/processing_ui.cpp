@@ -15,17 +15,19 @@ processing_ui::processing_ui()
         _doubleMem.push_back(0.0);
     }
     last_index = -1;
+
+    //processing functions pointers
+    functions.push_back(&processing_ui::brightness);
+    functions.push_back(&processing_ui::contrast);
+    functions.push_back(&processing_ui::negative);
+    functions.push_back(&processing_ui::gaussian_blur);
 };
 
 processing_data processing_ui::run_method(int index) {
     if(index != last_index)
         first_frame = true;
     last_index = index;
-
-    if(index == 0) return brightness();
-    if(index == 1) return contrast();
-    if(index == 2) return negative();
-    if(index == 3) return gaussian_blur();
+   return (this->*functions[index])();
 }
 
 processing_data processing_ui::brightness() {
