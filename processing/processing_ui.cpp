@@ -14,9 +14,14 @@ processing_ui::processing_ui()
         _floatMem.push_back(0.0f);
         _doubleMem.push_back(0.0);
     }
+    last_index = -1;
 };
 
 processing_data processing_ui::run_method(int index) {
+    if(index != last_index)
+        first_frame = true;
+    last_index = index;
+
     if(index == 0) return brightness();
     if(index == 1) return contrast();
     if(index == 2) return negative();
@@ -25,6 +30,11 @@ processing_data processing_ui::run_method(int index) {
 
 processing_data processing_ui::brightness() {
     auto data = processing_data();
+    //initial values
+    if(first_frame) {
+        _intMem[0] = 1;
+        first_frame = false;
+    }
     ImGui::SliderInt("Brightness", &_intMem[0], -255, 255);
     data._intVal[0] = _intMem[0];
     data.description = const_cast<char*>(
@@ -35,6 +45,10 @@ processing_data processing_ui::brightness() {
 
 processing_data processing_ui::contrast() {
     auto data = processing_data();
+    if(first_frame) {
+        _floatMem[0] = 1.0f; //initial value
+        first_frame = false;
+    }
     ImGui::SliderFloat("Contrast", &_floatMem[0], 0, 25);
     data._floatVal[0] = _floatMem[0];
     data.description = const_cast<char*>(
@@ -53,37 +67,32 @@ processing_data processing_ui::negative() {
 
 processing_data processing_ui::gaussian_blur() {
     auto data = processing_data();
-    auto* kernel_size = new int[2];
-    kernel_size[0] = 1;
-    kernel_size[1] = 1;
-    auto* sigma = new float[2];
-    sigma[0] = 1;
-    sigma[1] = 1;
+    //initial values
+    if(first_frame) {
+        _intMem[0] = 1;
+        _intMem[1] = 1;
+        _floatMem[0] = 1.0f;
+        _floatMem[1] = 1.0f;
+        first_frame = false;
+    }
     const char* borders[] {
         const_cast<char*>("Constant"),
         const_cast<char*>("Replicate"),
         const_cast<char*>("Reflect"),
         const_cast<char*>("Reflect 101"),
         const_cast<char*>("Transparent"),
-        const_cast<char*>("Isolated")
-        };
-    ImGui::InputInt2("Kernel Size (x,y)", kernel_size);
-    ImGui::InputFloat2("Sigma (x,y)", sigma);
+        const_cast<char*>("Isolated")};
+    ImGui::InputInt2("Kernel Size (x,y)", _intMem.data());
+    ImGui::InputFloat2("Sigma (x,y)", _floatMem.data());
     ImGui::Combo("Border", &_intMem[2], borders, IM_ARRAYSIZE(borders));
-    data._intVal[2] = _intMem[2];
-    if(data._intVal[2] == 5) data._intVal[2] = 16; //offset for OpenCV
-    _intMem[0] = kernel_size[0];
-    _intMem[1] = kernel_size[1];
+    if(_intMem[2] == 5) _intMem[2] = 16; //offset for OpenCV
     data._intVal[0] = _intMem[0];
     data._intVal[1] = _intMem[1];
-    _doubleMem[0] = static_cast<double>(sigma[0]);
-    _doubleMem[1] = static_cast<double>(sigma[1]);
-    data._doubleVal[0] = _doubleMem[0];
-    data._doubleVal[1] = _doubleMem[1];
+    data._intVal[2] = _intMem[2];
+    data._doubleVal[0] = static_cast<double>(_floatMem[0]);
+    data._doubleVal[1] = static_cast<double>(_floatMem[1]);
     data.description = const_cast<char*>(
             "Blurs the image using Gaussian Blur.\n\n"
             "Solution: [TO BE DONE]");
-    delete[] kernel_size;
-    delete[] sigma;
     return data;
 }

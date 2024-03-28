@@ -16,6 +16,8 @@ private:
     std::vector<int> _intMem{};
     std::vector<float> _floatMem{};
     std::vector<double> _doubleMem{};
+    bool first_frame;
+    int last_index;
 };
 
 

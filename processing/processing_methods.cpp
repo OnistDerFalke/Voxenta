@@ -28,7 +28,7 @@ cv::Mat processing_methods::contrast(cv::Mat image, float val) {
         for( int x = 0; x < image.cols; x++ ) {
             for( int c = 0; c < image.channels(); c++ ) {
                 final_image.at<cv::Vec3b>(y,x)[c] =
-                        cv::saturate_cast<uchar>( val * (image.at<cv::Vec3b>(y,x)[c] - 128) + 128);
+                        cv::saturate_cast<uchar>( val * (float)(image.at<cv::Vec3b>(y,x)[c] - 128) + 128);
             }
         }
     }
