@@ -74,6 +74,12 @@ cv::Mat processing_methods::binarization(cv::Mat image, processing_data data) {
     cv::cvtColor(image, grayscale_image, cv::COLOR_BGR2GRAY);
     if(data._intVal[0] == 0)
         cv::threshold(grayscale_image, final_image, data._intVal[1], data._intVal[2], cv::THRESH_BINARY);
+    if(data._intVal[0] == 1)
+        cv::threshold(grayscale_image, final_image, data._intVal[1], data._intVal[2], cv::THRESH_BINARY_INV);
+    if(data._intVal[0] == 2)
+        cv::threshold(grayscale_image, final_image, data._intVal[1], 0, cv::THRESH_TOZERO);
+    if(data._intVal[0] == 3)
+        cv::threshold(grayscale_image, final_image, data._intVal[1], 0, cv::THRESH_TOZERO_INV);
     return final_image;
 }
 

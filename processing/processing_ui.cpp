@@ -108,7 +108,10 @@ processing_data processing_ui::binarization() {
         first_frame = false;
     }
     const char* binarization_method[] {
-            const_cast<char*>("Manual")};
+            const_cast<char*>("Manual"),
+            const_cast<char*>("Manual Inverted"),
+            const_cast<char*>("Manual To Zero"),
+            const_cast<char*>("Manual To Zero Inverted")};
     ImGui::Combo("Method", &_intMem[0],
                  binarization_method, IM_ARRAYSIZE(binarization_method));
     if(_intMem[0] == 0)
@@ -123,6 +126,42 @@ processing_data processing_ui::binarization() {
                 "Parameters:\n"
                 "- Threshold: Pixel under this value is black, otherwise has max value.\n"
                 "- Max Value: Value of a pixel that in grayscale was equal or higher than threshold.");
+    }
+    if(_intMem[0] == 1)
+    {
+        ImGui::SliderInt("Threshold", &_intMem[1], 0, 255);
+        ImGui::SliderInt("Max Value", &_intMem[2], 0, 255);
+        data._intVal[0] = _intMem[0];
+        data._intVal[1] = _intMem[1];
+        data._intVal[2] = _intMem[2];
+        data.description = const_cast<char*>(
+                "Changes grayscale image to inverted binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
+                "Parameters:\n"
+                "- Threshold: Pixel under this value is max value, otherwise is black.\n"
+                "- Max Value: Value of a pixel that in grayscale was lower than threshold.");
+    }
+    if(_intMem[0] == 2)
+    {
+        ImGui::SliderInt("Threshold", &_intMem[1], 0, 255);
+        data._intVal[0] = _intMem[0];
+        data._intVal[1] = _intMem[1];
+        data.description = const_cast<char*>(
+                "Changes grayscale image to image with black pixels under threshold and grayscale for equal or higher. "
+                "It uses manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
+                "Parameters:\n"
+                "- Threshold: Pixel under this value is black, otherwise is grayscale.");
+    }
+    if(_intMem[0] == 3)
+    {
+        ImGui::SliderInt("Threshold", &_intMem[1], 0, 255);
+        data._intVal[0] = _intMem[0];
+        data._intVal[1] = _intMem[1];
+        data.description = const_cast<char*>(
+                "Changes grayscale image to image with black pixels equal or above the threshold and grayscale "
+                "for the pixels that are below the threshold."
+                "It uses manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
+                "Parameters:\n"
+                "- Threshold: Pixel under this value is grayscale, otherwise is black.");
     }
     return data;
 }
