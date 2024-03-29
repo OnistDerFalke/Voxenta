@@ -80,7 +80,13 @@ cv::Mat processing_methods::binarization(cv::Mat image, processing_data data) {
         cv::threshold(grayscale_image, final_image, data._intVal[1], 0, cv::THRESH_TOZERO);
     if(data._intVal[0] == 3)
         cv::threshold(grayscale_image, final_image, data._intVal[1], 0, cv::THRESH_TOZERO_INV);
-    return final_image;
+    if(data._intVal[0] == 4)
+        cv::threshold(grayscale_image, final_image, data._intVal[1], 0, cv::THRESH_TRUNC);
+    if(data._intVal[0] == 5)
+        cv::threshold(grayscale_image, final_image, 0, data._intVal[2], cv::THRESH_OTSU);
+    if(data._intVal[0] == 6)
+        cv::threshold(grayscale_image, final_image, 0, data._intVal[2], cv::THRESH_TRIANGLE);
+            return final_image;
 }
 
 cv::Mat processing_methods::gaussian_blur(cv::Mat image, processing_data data) {
