@@ -6,6 +6,7 @@ bool processing_data::compare(processing_data data) {
         if(data._intVal[i] != this->_intVal[i]) return false;
         if(data._floatVal[i] != this->_floatVal[i]) return false;
         if(data._doubleVal[i] != this->_doubleVal[i]) return false;
+        if(data._boolVal[i] != this->_boolVal[i]) return false;
     }
     return true;
 }
@@ -18,6 +19,7 @@ processing_data::processing_data()
         _intVal.push_back(0);
         _floatVal.push_back(0.0f);
         _doubleVal.push_back(0.0);
+        _boolVal.push_back(false);
     }
     //description = nullptr;
 }

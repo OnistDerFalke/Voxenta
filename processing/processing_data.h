@@ -9,6 +9,7 @@ public:
     std::vector<float> _floatVal;
     std::vector<int> _intVal;
     std::vector<double> _doubleVal;
+    std::vector<bool> _boolVal;
     char* description{};
     int slots_per_type;
     bool compare(processing_data data);

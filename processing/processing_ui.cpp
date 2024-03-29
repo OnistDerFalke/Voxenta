@@ -13,6 +13,7 @@ processing_ui::processing_ui()
         _intMem.push_back(0);
         _floatMem.push_back(0.0f);
         _doubleMem.push_back(0.0);
+        _boolMem.push_back(false);
     }
     last_index = -1;
 
@@ -105,6 +106,7 @@ processing_data processing_ui::binarization() {
         _intMem[0] = 0;
         _intMem[1] = 127;
         _intMem[2] = 255;
+        _boolMem[0] = false;
         first_frame = false;
     }
     const char* binarization_method[] {
@@ -128,7 +130,8 @@ processing_data processing_ui::binarization() {
                 "Changes grayscale image to binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
                 "Parameters:\n"
                 "- Threshold: Pixels above threshold have max value, otherwise black.\n"
-                "- Max Value: Value of a pixel that initial value was higher than threshold.");
+                "- Max Value: Value of a pixel that initial value was higher than threshold.\n"
+                "- No Grayscale: If true, initial image is not converted to grayscale before binarization.");
     }
     if(_intMem[0] == 1)
     {
@@ -141,7 +144,8 @@ processing_data processing_ui::binarization() {
                 "Changes grayscale image to inverted binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
                 "Parameters:\n"
                 "- Threshold: Pixel above this value is black, otherwise is max value.\n"
-                "- Max Value: Value of a pixel that initial value was lower or equal the threshold.");
+                "- Max Value: Value of a pixel that initial value was lower or equal the threshold.\n"
+                "- No Grayscale: If true, initial image is not converted to grayscale before binarization.");
     }
     if(_intMem[0] == 2)
     {
@@ -151,7 +155,8 @@ processing_data processing_ui::binarization() {
         data.description = const_cast<char*>(
                 "Changes grayscale image to inverted binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form\n\n."
                 "Parameters:\n"
-                "- Threshold: Pixel above threshold value is left unchanged, otherwise is black.");
+                "- Threshold: Pixel above threshold value is left unchanged, otherwise is black.\n"
+                "- No Grayscale: If true, initial image is not converted to grayscale before binarization.");
     }
     if(_intMem[0] == 3)
     {
@@ -162,7 +167,8 @@ processing_data processing_ui::binarization() {
                 "Changes grayscale image to binary image with dynamically computed threshold."
                 "If image is not in grayscale it converts it to this form.\n\n"
                 "Parameters:\n"
-                "- Threshold: Pixel above threshold value is black, otherwise is left unchanged.");
+                "- Threshold: Pixel above threshold value is black, otherwise is left unchanged.\n"
+                "- No Grayscale: If true, initial image is not converted to grayscale before binarization.");
     }
     if(_intMem[0] == 4)
     {
@@ -170,9 +176,11 @@ processing_data processing_ui::binarization() {
         data._intVal[0] = _intMem[0];
         data._intVal[1] = _intMem[1];
         data.description = const_cast<char*>(
-                "Changes grayscale image to inverted binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
+                "Changes grayscale image to inverted binary color image using manually chosen threshold."
+                " If image is not in grayscale it converts it to this form.\n\n"
                 "Parameters:\n"
-                "- Threshold: Pixel above this value has threshold value, otherwise is left unchanged.");
+                "- Threshold: Pixel above this value has threshold value, otherwise is left unchanged.\n"
+                "- No Grayscale: If true, initial image is not converted to grayscale before binarization.");
     }
     if(_intMem[0] == 5)
     {
@@ -191,6 +199,14 @@ processing_data processing_ui::binarization() {
         data.description = const_cast<char*>(
                 "Changes grayscale image to binarized with automated threshold computed using Triangle method."
                 " If image is not in grayscale it converts it to this form.");
+    }
+
+    if(_intMem[0] != 5 && _intMem[0] != 6)
+    {
+        bool no_grayscale = _boolMem[0];
+        ImGui::Checkbox("No Grayscale (experimental)", &no_grayscale);
+        _boolMem[0] = no_grayscale;
+        data._boolVal[0] = _boolMem[0];
     }
     return data;
 }

@@ -13,6 +13,7 @@ private:
     std::vector<int> _intMem{};
     std::vector<float> _floatMem{};
     std::vector<double> _doubleMem{};
+    std::vector<bool> _boolMem{};
     bool first_frame{};
     int last_index;
 
