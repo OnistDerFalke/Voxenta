@@ -43,7 +43,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
         return;
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-    // Backup GL state
+    // Backup GL ui_state
     GLint last_program; glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
     GLint last_texture; glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
     GLint last_active_texture; glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);
@@ -61,7 +61,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
     GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
     GLboolean last_enable_scissor_test = glIsEnabled(GL_SCISSOR_TEST);
 
-    // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
+    // Setup render ui_state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -112,7 +112,7 @@ void ImGui_ImplGlfwGL3_RenderDrawLists(ImDrawData* draw_data)
         }
     }
 
-    // Restore modified GL state
+    // Restore modified GL ui_state
     glUseProgram(last_program);
     glActiveTexture(last_active_texture);
     glBindTexture(GL_TEXTURE_2D, last_texture);
@@ -192,7 +192,7 @@ bool ImGui_ImplGlfwGL3_CreateFontsTexture()
     // Store our identifier
     io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
 
-    // Restore state
+    // Restore ui_state
     glBindTexture(GL_TEXTURE_2D, last_texture);
 
     return true;
@@ -200,7 +200,7 @@ bool ImGui_ImplGlfwGL3_CreateFontsTexture()
 
 bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 {
-    // Backup GL state
+    // Backup GL ui_state
     GLint last_texture, last_array_buffer, last_vertex_array;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
@@ -267,7 +267,7 @@ bool ImGui_ImplGlfwGL3_CreateDeviceObjects()
 
     ImGui_ImplGlfwGL3_CreateFontsTexture();
 
-    // Restore modified GL state
+    // Restore modified GL ui_state
     glBindTexture(GL_TEXTURE_2D, last_texture);
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
     glBindVertexArray(last_vertex_array);

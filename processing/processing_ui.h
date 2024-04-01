@@ -2,29 +2,25 @@
 #define VOXENTA_PROCESSING_UI_H
 
 #include <opencv2/core/mat.hpp>
-#include "processing_data.h"
+#include "utils/data_containers.h"
 
 class processing_ui {
 public:
     processing_ui();
-    processing_data run_method(int index);
+    containers::processing_data run_method(int index);
 private:
-    std::vector<processing_data (processing_ui::*)()> functions;
-    std::vector<int> _intMem{};
-    std::vector<float> _floatMem{};
-    std::vector<double> _doubleMem{};
-    std::vector<bool> _boolMem{};
+    std::vector<containers::processing_data (processing_ui::*)()> functions;
+    containers::value_container ui_state;
     bool first_frame{};
     int last_index;
 
     //effect functions
-    processing_data brightness();
-    processing_data contrast();
-    processing_data negative();
-    processing_data grayscale();
-    processing_data binarization();
-    processing_data gaussian_blur();
-
+    containers::processing_data brightness();
+    containers::processing_data contrast();
+    containers::processing_data negative();
+    containers::processing_data grayscale();
+    containers::processing_data binarization();
+    containers::processing_data gaussian_blur();
 };
 
 

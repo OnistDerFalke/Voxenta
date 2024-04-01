@@ -7,7 +7,7 @@
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
-    this->data = processing_data();
+    this->data = containers::processing_data();
     this->proc_ui = processing_ui();
     this->processor = image_processor();
 

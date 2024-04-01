@@ -303,10 +303,10 @@ struct IMGUI_API ImGuiSimpleColumns
     float       CalcExtraSpace(float avail_w);
 };
 
-// Internal state of the currently focused/edited text input box
+// Internal ui_state of the currently focused/edited text input box
 struct IMGUI_API ImGuiTextEditState
 {
-    ImGuiID             Id;                         // widget id owning the text state
+    ImGuiID             Id;                         // widget id owning the text ui_state
     ImVector<ImWchar>   Text;                       // edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. so we copy into own buffer.
     ImVector<char>      InitialText;                // backup of end-user buffer at the time of focus (in UTF-8, unaltered)
     ImVector<char>      TempTextBuffer;
@@ -359,7 +359,7 @@ struct ImGuiPopupRef
     ImGuiPopupRef(ImGuiID id, ImGuiWindow* parent_window, ImGuiID parent_menu_set, const ImVec2& mouse_pos) { PopupId = id; Window = NULL; ParentWindow = parent_window; ParentMenuSet = parent_menu_set; MousePosOnOpen = mouse_pos; }
 };
 
-// Main state for ImGui
+// Main ui_state for ImGui
 struct ImGuiContext
 {
     bool                    Initialized;
@@ -426,7 +426,7 @@ struct ImGuiContext
     ImGuiMouseCursor        MouseCursor;
     ImGuiMouseCursorData    MouseCursorData[ImGuiMouseCursor_Count_];
 
-    // Widget state
+    // Widget ui_state
     ImGuiTextEditState      InputTextState;
     ImFont                  InputTextPasswordFont;
     ImGuiID                 ScalarAsInputTextId;                // Temporary text input when CTRL+clicking on a slider, etc.
