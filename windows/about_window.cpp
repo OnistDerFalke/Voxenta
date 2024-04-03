@@ -15,12 +15,13 @@ void about_window::show(bool* open, ImVec2 mws) {
     if(ImGui::Begin("About Voxenta", open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_ShowBorders)) {
         ImGui::BeginChild("about", ImVec2(0,0), true);
-        ImGui::Text("Welcome to Voxenta!\n\n"
-                    "Voxenta is a basic image processing tool with simple\n"
-                    "interface and brief effects descriptions. It\n"
-                    "is was created to make things easier with image\n"
-                    "processing or being a good tool for programmers\n"
-                    "that want to focus only on creating image effects.\n\n"
+        ImGui::TextWrapped("%s", "Welcome to Voxenta!\n\n"
+                    "Voxenta is a basic image processing UI tool made with ImGui, "
+                    "OpenGL and OpenCV with simple interface and effects descriptions. "
+                    "It was created to make things easier with image processing to use ready-made "
+                    "UI environment and focus only on the effects creation in C++ using OpenCV (default) "
+                    "or other libraries. Application was tested on Linux but it should also work after "
+                    "building it for Microsoft Windows environment.\n\n"
                     "© 2024 OnistEngine.\n\n"
                     "This application is provided under the terms of the\n"
                     "MIT Licence, which means you have the right to copy,\n"
