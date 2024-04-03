@@ -31,8 +31,8 @@ To add an effect you have to:
 4. Add processing method to processing_methods and add it's pointer to the functions vector in constructor.
 5. Remember to save UI state and set your default values as it is done in examples.
 
-## Licence
-This application is provided under the terms of the **MIT Licence**, which means you have the right to copy, modify, and adapt our source code to your needs without obtaining my permission. 
+## License
+This application is provided under the terms of the **MIT License**, which means you have the right to copy, modify, and adapt our source code to your needs without obtaining my permission. 
 However, please ensure to retain appropriate copyright notices and comply with the terms of the license.
 
 ## Contact
