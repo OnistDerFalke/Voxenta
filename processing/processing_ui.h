@@ -20,7 +20,6 @@ private:
     containers::processing_data negative();
     containers::processing_data grayscale();
     containers::processing_data binarization();
-    containers::processing_data gaussian_blur();
 };
 
 

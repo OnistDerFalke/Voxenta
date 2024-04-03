@@ -1,9 +1,11 @@
 #include "output_img_window.h"
 
+/* Creates ImGui window inside main window with the size given */
 output_img_window::output_img_window(ImVec2 mws) {
     this->mws = mws;
 }
 
+/* Shows the window with a modified input image */
 void output_img_window::show(cv::Mat image, bool just_uploaded) {
     
     //Setting new position and size
@@ -65,6 +67,7 @@ void output_img_window::show(cv::Mat image, bool just_uploaded) {
     ImGui::End();
 }
 
+/* Updates the window size */
 void output_img_window::set_mws(ImVec2 size) {
     this->mws = size;
     need_update = true;

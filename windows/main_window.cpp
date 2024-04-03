@@ -1,14 +1,17 @@
 #include "main_window.h"
 
+/* Error callback for OpenGL*/
 void main_window::error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
 }
 
+/* Callback for OpenGL window maximize event*/
 void main_window::window_maximize_callback(GLFWwindow* window, int maximized) {
     win_prop::window_resized = maximized;
 }
 
+/* Returns the size of the main application window */
 ImVec2 get_window_size(GLFWwindow* window)
 {
     int width, height;
@@ -16,6 +19,7 @@ ImVec2 get_window_size(GLFWwindow* window)
     return {(float)width, (float)height};
 }
 
+/* Returns if there were any window size changes */
 bool main_window::window_resized(GLFWwindow* window) const {
     if(get_window_size(window).x != latest_size.x) return true;
     if(get_window_size(window).y != latest_size.y) return true;
@@ -23,8 +27,10 @@ bool main_window::window_resized(GLFWwindow* window) const {
     return false;
 }
 
+/* UI elements style stuff */
 void set_ui_style()
 {
+    //Shapes and properties
     ImGuiStyle& st = ImGui::GetStyle();
     st.FramePadding = ImVec2(4.0f, 2.0f);
     st.ItemSpacing = ImVec2(8.0f, 2.0f);
@@ -33,6 +39,7 @@ void set_ui_style()
     st.ScrollbarRounding = 1.0f;
     st.GrabRounding = 1.0f;
 
+    //Colors
     ImVec4* colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 0.95f);
     colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
@@ -77,12 +84,11 @@ main_window::main_window() {
     if (!glfwInit())
        return;
 
-    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-
     //Main window in OpenGL
     GLFWwindow* window = glfwCreateWindow(
             1280, 720, "Voxenta", nullptr, nullptr);
 
+    //Callback to inform if window maximize event happened
     glfwSetWindowMaximizeCallback(window, window_maximize_callback);
 
     //Initialize OpenGL
@@ -124,8 +130,10 @@ main_window::main_window() {
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui::Render();
 
+        //Saving latest size and storing flags
         latest_size = get_window_size(window);
         latest_maximize_flag = win_prop::window_resized;
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

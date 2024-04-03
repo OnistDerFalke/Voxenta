@@ -5,18 +5,24 @@
 
 processing_ui::processing_ui()
 {
+    //UI state needs to be stored every frame
     this->ui_state = containers::value_container();
     last_index = -1;
 
-    //processing functions pointers
+    //UI functions pointers, UI shows properties elements of the chosen effect index
     functions.push_back(&processing_ui::brightness);
     functions.push_back(&processing_ui::contrast);
     functions.push_back(&processing_ui::negative);
     functions.push_back(&processing_ui::grayscale);
     functions.push_back(&processing_ui::binarization);
-    functions.push_back(&processing_ui::gaussian_blur);
 };
 
+/* INFO:
+ * - For every UI method we need first frame check (shown on examples) to set initial values
+ * - Between frames UI state needs to be stored in ui_state
+ * - Every UI method works in the same way, it only changes properties interface elements and context */
+
+/* Runs the UI properties method that was assigned to index given */
 containers::processing_data processing_ui::run_method(int index) {
     if(index != last_index)
         first_frame = true;
@@ -24,6 +30,7 @@ containers::processing_data processing_ui::run_method(int index) {
     return (this->*functions[index])();
 }
 
+/* Example UI properties for effect */
 containers::processing_data processing_ui::brightness() {
     auto data = containers::processing_data();
     if(first_frame) {
@@ -40,8 +47,10 @@ containers::processing_data processing_ui::brightness() {
     return data;
 }
 
+/* Example UI properties for effect */
 containers::processing_data processing_ui::contrast() {
     auto data = containers::processing_data();
+
     if(first_frame) {
         ui_state.floats[0] = 1.0f;
         first_frame = false;
@@ -56,6 +65,7 @@ containers::processing_data processing_ui::contrast() {
     return data;
 }
 
+/* Example UI properties for effect */
 containers::processing_data processing_ui::negative() {
     auto data = containers::processing_data();
     data.description = const_cast<char*>(
@@ -63,6 +73,7 @@ containers::processing_data processing_ui::negative() {
     return data;
 }
 
+/* Example UI properties for effect */
 containers::processing_data processing_ui::grayscale() {
     auto data = containers::processing_data();
     if(first_frame) {
@@ -91,6 +102,7 @@ containers::processing_data processing_ui::grayscale() {
     return data;
 }
 
+/* Example UI properties for effect */
 containers::processing_data processing_ui::binarization() {
     auto data = containers::processing_data();
     if(first_frame) {
@@ -199,72 +211,5 @@ containers::processing_data processing_ui::binarization() {
         ui_state.bools[0] = no_grayscale;
         data.values.bools[0] = ui_state.bools[0];
     }
-    return data;
-}
-
-containers::processing_data processing_ui::gaussian_blur() {
-    auto data = containers::processing_data();
-    if(first_frame) {
-        ui_state.ints[0] = 1;
-        ui_state.ints[1] = 1;
-        ui_state.floats[0] = 0.0f;
-        ui_state.floats[1] = 0.0f;
-        first_frame = false;
-    }
-    int kernel_limit = 10000;
-    float sigma_limit = 10000.0f;
-    const char* borders[] {
-        const_cast<char*>("Constant"),
-        const_cast<char*>("Replicate"),
-        const_cast<char*>("Reflect"),
-        const_cast<char*>("Reflect 101"),
-        const_cast<char*>("Transparent"),
-        const_cast<char*>("Isolated")};
-    ImGui::InputInt2("Kernel Size (x,y)", ui_state.ints.data());
-    ImGui::InputFloat2("Sigma (x,y)", ui_state.floats.data());
-    ImGui::Combo("Border", &ui_state.ints[2], borders, IM_ARRAYSIZE(borders));
-    data.values.ints[2] = ui_state.ints[2];
-    if(data.values.ints[2] == 5) data.values.ints[2] = 16; //offset for OpenCV
-    if(ui_state.ints[0] == 0 || ui_state.ints[0] == 0) //if one is zero also seconds has to be and it runs sigma computations
-    {
-        ui_state.ints[0] = 0;
-        ui_state.ints[1] = 0;
-        if(ui_state.floats[0] == 0 || ui_state.floats[1] == 0) {
-            ui_state.floats[0] = 1.0f;
-            ui_state.floats[1] = 1.0f;
-        }
-    }
-    if(ui_state.ints[0] < 0) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Kernel size X cannot be negative.");
-        ui_state.ints[0] = 1;
-    }
-    if(ui_state.ints[1] < 0) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Kernel size Y cannot be negative.");
-        ui_state.ints[1] = 1;
-    }
-    if(ui_state.ints[0] % 2 == 0 && ui_state.ints[0] != 0) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Kernel size X must be odd.");
-        ui_state.ints[0] = 1;
-    }
-    if(ui_state.ints[1] % 2 == 0 && ui_state.ints[1] != 0) {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Kernel size Y must be odd.");
-        ui_state.ints[1] = 1;
-    }
-    for(int i=0; i<2; i++)
-    {
-        if(ui_state.ints[i] > kernel_limit) ui_state.ints[i] = (int)kernel_limit - 1;
-        if(ui_state.floats[i] > sigma_limit) ui_state.floats[i] = sigma_limit - 1;
-    }
-    data.values.ints[0] = ui_state.ints[0];
-    data.values.ints[1] = ui_state.ints[1];
-    data.values.doubles[0] = static_cast<double>(ui_state.floats[0]);
-    data.values.doubles[1] = static_cast<double>(ui_state.floats[1]);
-    data.description = const_cast<char*>(
-            "Blurs an image using a Gaussian filter.\n\n"
-            "Parameters:\n"
-            "- Kernel Size: Size of a kernel that runs on whole image applying Gaussian filtering effect. "
-            "It must be positive and odd.\n"
-            "- Sigma: Gaussian kernel standard deviation in horizontal (X) and vertical (Y) directions. "
-            "If Sigma Y is zero, it gets the value from Sigma X. If both are zero, effect is computed from kernel size.");
     return data;
 }

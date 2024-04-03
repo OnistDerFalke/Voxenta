@@ -2,6 +2,6 @@
 
 int main(int, char**)
 {
-    main_window mainWindow = main_window();
+    main_window();
     return 0;
 }

@@ -23,4 +23,4 @@ private:
 };
 
 
-#endif //VOXENTA_MAIN_WINDOW_H
+#endif

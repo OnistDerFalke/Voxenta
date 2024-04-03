@@ -17,13 +17,13 @@ properties_window::properties_window(ImVec2 mws)
     this->features[2] = const_cast<char*>("Negative");
     this->features[3] = const_cast<char*>("Grayscale");
     this->features[4] = const_cast<char*>("Binarization");
-    this->features[5] = const_cast<char*>("Gaussian Blur");
 }
 
+/* Shows the properties window and it's context */
 void properties_window::show() {
 
-    just_uploaded = false;
-    just_updated = false;
+    just_uploaded = false; //image was loaded event
+    just_updated = false; //image changed (effect changed or was modified) event
 
     //Setting new position and size
     auto border = std::min(mws.x, mws.y) * 0.01f;
@@ -37,7 +37,7 @@ void properties_window::show() {
                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_ShowBorders | ImGuiWindowFlags_MenuBar);
 
-    //Main menu
+    //Main menu, focused windows preparation
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load", "Ctrl+O")) {
@@ -67,8 +67,10 @@ void properties_window::show() {
     }
     ImGui::EndMenuBar();
 
+    //Shows about-window if it was opened in from menu
     about.show(&m_about_dialog_open, mws);
 
+    //To choose the effect image needs to be loaded
     if(!base_image.empty()) {
         //Effect combo
         ImGui::BeginChild("effect_choice",
@@ -76,20 +78,20 @@ void properties_window::show() {
         ImGui::Combo("##combo", &selected_item, features, IM_ARRAYSIZE(features));
         ImGui::EndChild();
     }
-
     ImGui::Dummy(ImVec2(0, 2));
 
     //Properties of effect
     ImGui::BeginChild("properties",
                       ImVec2((input_window_size.x)/2.0f-5.0f/4.0f * ImGui::GetStyle().ItemSpacing.x,
                                              input_window_size.y-80), true);
-
     ImGui::Text("Effect properties:");
     ImGui::Dummy(ImVec2(0, 5));
 
+    //Getting image effect properties data set in UI
     if(!base_image.empty())
         data = proc_ui.run_method(selected_item);
 
+    //Handles the filedialog for loading and saving image
     if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
         file_path = m_file_dialog_info.resultPath;
 
@@ -101,7 +103,7 @@ void properties_window::show() {
             }
         }
 
-        //Generating image from chosen file
+        //Getting image from chosen file
         if(m_file_dialog_info.type == ImGuiFileDialogType_OpenFile) {
             just_uploaded = true;
             if (!file_path.empty()) {
@@ -110,12 +112,16 @@ void properties_window::show() {
         }
     }
 
+    //Applying the effects with retrieved properties data
     if(!base_image.empty())
         modified_image = processor.process_image(base_image, selected_item, data, just_uploaded);
+
     just_updated = processor.did_update();
 
     ImGui::EndChild();
     ImGui::SameLine();
+
+    //Showing description in right properties window child
     ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
     ImGui::BeginChild("description",
                       ImVec2((input_window_size.x)/2.0f - 3.5f/2.0f * ImGui::GetStyle().ItemSpacing.x,
@@ -131,14 +137,17 @@ void properties_window::show() {
     ImGui::End();
 }
 
+/* Updates the window size */
 void properties_window::set_mws(ImVec2 size) {
     this->mws = size;
 }
 
+/* Returns the base image */
 cv::Mat properties_window::get_base_image() {
     return base_image;
 }
 
+/* Returns modified image with effect applied */
 cv::Mat properties_window::get_modified_image() {
     return modified_image;
 }

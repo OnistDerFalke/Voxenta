@@ -18,7 +18,6 @@ private:
     cv::Mat negative(cv::Mat image, containers::processing_data data);
     cv::Mat grayscale(cv::Mat image, containers::processing_data data);
     cv::Mat binarization(cv::Mat image, containers::processing_data data);
-    cv::Mat gaussian_blur(cv::Mat image, containers::processing_data data);
 };
 
 

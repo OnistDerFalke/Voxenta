@@ -1,19 +1,23 @@
 #include "processing_methods.h"
 
+#include <utility>
+
 processing_methods::processing_methods(){
-    //processing functions pointers
+
+    //Setting processing functions pointers, effect applied depends on chosen effect index
     functions.push_back(&processing_methods::brightness);
     functions.push_back(&processing_methods::contrast);
     functions.push_back(&processing_methods::negative);
     functions.push_back(&processing_methods::grayscale);
     functions.push_back(&processing_methods::binarization);
-    functions.push_back(&processing_methods::gaussian_blur);
-};
-
-cv::Mat processing_methods::run_method(cv::Mat image, int index, containers::processing_data data) {
-    return (this->*functions[index])(image, data);
 }
 
+/* Runs the method assigned to the effect index, returns modified image */
+cv::Mat processing_methods::run_method(cv::Mat image, int index, containers::processing_data data) {
+    return (this->*functions[index])(std::move(image), std::move(data));
+}
+
+/* Example function using OpenCV */
 cv::Mat processing_methods::brightness(cv::Mat image, containers::processing_data data) {
     cv::Mat final_image = cv::Mat::zeros( image.size(), image.type() );;
     for( int y = 0; y < image.rows; y++ ) {
@@ -27,6 +31,7 @@ cv::Mat processing_methods::brightness(cv::Mat image, containers::processing_dat
     return final_image;
 }
 
+/* Example function using OpenCV */
 cv::Mat processing_methods::contrast(cv::Mat image, containers::processing_data data) {
     cv::Mat final_image = cv::Mat::zeros( image.size(), image.type() );;
     for( int y = 0; y < image.rows; y++ ) {
@@ -40,6 +45,7 @@ cv::Mat processing_methods::contrast(cv::Mat image, containers::processing_data 
     return final_image;
 }
 
+/* Example function using OpenCV */
 cv::Mat processing_methods::negative(cv::Mat image, containers::processing_data data) {
     cv::Mat final_image = cv::Mat::zeros( image.size(), image.type() );;
     for( int y = 0; y < image.rows; y++ ) {
@@ -53,6 +59,7 @@ cv::Mat processing_methods::negative(cv::Mat image, containers::processing_data 
     return final_image;
 }
 
+/* Example function using OpenCV */
 cv::Mat processing_methods::grayscale(cv::Mat image, containers::processing_data data) {
     cv::Mat final_image = cv::Mat::zeros( image.size(), image.type() );;
     for( int y = 0; y < image.rows; y++ ) {
@@ -68,32 +75,19 @@ cv::Mat processing_methods::grayscale(cv::Mat image, containers::processing_data
     return final_image;
 }
 
+/* Example function using OpenCV */
 cv::Mat processing_methods::binarization(cv::Mat image, containers::processing_data data) {
-    cv::Mat final_image = cv::Mat();
-    cv::Mat grayscale_image = cv::Mat();
+    cv::Mat final_image, grayscale_image;
     cv::cvtColor(image, grayscale_image, cv::COLOR_BGR2GRAY);
     if(data.values.bools[0]) grayscale_image = image;
-    if(data.values.ints[0] == 0)
-        cv::threshold(grayscale_image, final_image, data.values.ints[1], data.values.ints[2], cv::THRESH_BINARY);
-    if(data.values.ints[0] == 1)
-        cv::threshold(grayscale_image, final_image, data.values.ints[1], data.values.ints[2], cv::THRESH_BINARY_INV);
-    if(data.values.ints[0] == 2)
-        cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TOZERO);
-    if(data.values.ints[0] == 3)
-        cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TOZERO_INV);
-    if(data.values.ints[0] == 4)
-        cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TRUNC);
-    if(data.values.ints[0] == 5)
-        cv::threshold(grayscale_image, final_image, 0, data.values.ints[2], cv::THRESH_OTSU);
-    if(data.values.ints[0] == 6)
-        cv::threshold(grayscale_image, final_image, 0, data.values.ints[2], cv::THRESH_TRIANGLE);
-            return final_image;
-}
+    int mode = data.values.ints[0];
 
-cv::Mat processing_methods::gaussian_blur(cv::Mat image, containers::processing_data data) {
-    cv::Mat final_image = cv::Mat();
-    cv::GaussianBlur(image, final_image,
-                         cv::Size(data.values.ints[0], data.values.ints[1]),
-                     data.values.doubles[0], data.values.doubles[1], data.values.ints[2]);
+    if(mode == 0) cv::threshold(grayscale_image, final_image, data.values.ints[1], data.values.ints[2], cv::THRESH_BINARY);
+    if(mode == 1) cv::threshold(grayscale_image, final_image, data.values.ints[1], data.values.ints[2], cv::THRESH_BINARY_INV);
+    if(mode == 2) cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TOZERO);
+    if(mode == 3) cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TOZERO_INV);
+    if(mode == 4) cv::threshold(grayscale_image, final_image, data.values.ints[1], 0, cv::THRESH_TRUNC);
+    if(mode == 5) cv::threshold(grayscale_image, final_image, 0, data.values.ints[2], cv::THRESH_OTSU);
+    if(mode == 6) cv::threshold(grayscale_image, final_image, 0, data.values.ints[2], cv::THRESH_TRIANGLE);
     return final_image;
 }
