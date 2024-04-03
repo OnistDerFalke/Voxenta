@@ -3,6 +3,15 @@
 Voxenta is a basic image processing UI tool made with ImGui, OpenGL and OpenCV with simple interface and effects descriptions. It was created to make things easier with image processing to use ready-made UI environment and focus only on the effects creation in C++ using OpenCV (default) or other libraries.
 Application was tested on Linux but it should also work after building it for Microsoft Windows environment. 
 
+## Requirements
+Commands for Fedora Linux
+
+OpenCV:
+**$** sudo dnf install opencv opencv-devel
+
+OpenGL:
+**$** sudo dnf install libglfw3-dev glfw-devel glew-devel SDL2-devel SDL2_image-devel glm-devel freetype-devel freeglut glibc-devel
+
 ## Ready to use
 Voxenta already contains some examples that you can study to understand how to add new effects. It works as it is shown below:
 
