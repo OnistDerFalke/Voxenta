@@ -94,10 +94,10 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 	bool complete = false;
 
 	ImGui::PushID(dialogInfo);
-    ImGui::SetNextWindowPos(ImVec2(mws.x/2 - mws.x/3, mws.y/2-mws.y/4));
+	ImGui::SetNextWindowPos(ImVec2(mws.x/2 - mws.x/3, mws.y/2-mws.y/4));
 	ImGui::SetNextWindowSize(ImVec2(mws.x*2/3, mws.y/2));
 
-    ImGui::SetNextWindowFocus();
+	ImGui::SetNextWindowFocus();
 	if (ImGui::Begin(dialogInfo->title.c_str(), open, ImGuiWindowFlags_NoResize ))
 	{
 		if (dialogInfo->currentFiles.empty() && dialogInfo->currentDirectories.empty() || dialogInfo->refreshInfo)
@@ -105,7 +105,7 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 
 		// Draw path
 		ImGui::Text("Path: %s", dialogInfo->directoryPath.string().c_str());
-        ImGui::Dummy(ImVec2(0.0f, 5.0f));
+		ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
 		ImGui::BeginChild("##browser", ImVec2(ImGui::GetContentRegionAvail().x, mws.y/2 - 100.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
 		ImGui::Columns(4);
@@ -311,8 +311,8 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 			auto filePath = fileEntry.path();
 			auto fileName = filePath.filename();
 
-            if(!std::filesystem::exists(filePath))
-                continue;
+			if(!std::filesystem::exists(filePath))
+				continue;
 
 			if (ImGui::Selectable(fileName.string().c_str(), dialogInfo->currentIndex == index, ImGuiSelectableFlags_AllowDoubleClick, ImVec2(ImGui::GetContentRegionAvail().x, 0)))
 			{
@@ -352,13 +352,13 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 		fileNameBuffer[fileNameSize] = 0;
 
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-        ImGui::Dummy(ImVec2(0.0f, 1.0f));
+		ImGui::Dummy(ImVec2(0.0f, 1.0f));
 		if (ImGui::InputText("File Name", fileNameBuffer, fileNameBufferSize))
 		{
 			dialogInfo->fileName = std::string(fileNameBuffer);
 			dialogInfo->currentIndex = 0;
 		}
-        ImGui::Dummy(ImVec2(0.0f, 1.0f));
+		ImGui::Dummy(ImVec2(0.0f, 1.0f));
 		if (ImGui::Button("Cancel"))
 		{
 			fileNameSortOrder = ImGuiFileDialogSortOrder_None;
@@ -378,35 +378,35 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)
 
 		if (dialogInfo->type == ImGuiFileDialogType_OpenFile)
 		{
-            dialogInfo->resultPath = dialogInfo->directoryPath / dialogInfo->fileName;
-            if(ImGui::IsFileImage(dialogInfo->resultPath)) {
-                if (ImGui::Button("Load")) {
-                    if (std::filesystem::exists(dialogInfo->resultPath)) {
-                        fileNameSortOrder = ImGuiFileDialogSortOrder_None;
-                        sizeSortOrder = ImGuiFileDialogSortOrder_None;
-                        typeSortOrder = ImGuiFileDialogSortOrder_None;
-                        dateSortOrder = ImGuiFileDialogSortOrder_None;
+			dialogInfo->resultPath = dialogInfo->directoryPath / dialogInfo->fileName;
+			if(ImGui::IsFileImage(dialogInfo->resultPath)) {
+				if (ImGui::Button("Load")) {
+					if (std::filesystem::exists(dialogInfo->resultPath)) {
+						fileNameSortOrder = ImGuiFileDialogSortOrder_None;
+						sizeSortOrder = ImGuiFileDialogSortOrder_None;
+						typeSortOrder = ImGuiFileDialogSortOrder_None;
+						dateSortOrder = ImGuiFileDialogSortOrder_None;
 
-                        dialogInfo->refreshInfo = false;
-                        dialogInfo->currentIndex = 0;
-                        dialogInfo->currentFiles.clear();
-                        dialogInfo->currentDirectories.clear();
+						dialogInfo->refreshInfo = false;
+						dialogInfo->currentIndex = 0;
+						dialogInfo->currentFiles.clear();
+						dialogInfo->currentDirectories.clear();
 
-                        complete = true;
-                        *open = false;
-                    }
-                }
-            }
-            else {
-                ImVec4* c = ImGui::GetStyle().Colors;
-                c[ImGuiCol_Button] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
-                c[ImGuiCol_ButtonHovered] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
-                c[ImGuiCol_ButtonActive] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
-                ImGui::Button("Load");
-                c[ImGuiCol_Button] = ImVec4(0.50f, 0.50f, 0.50f, 0.63f);
-                c[ImGuiCol_ButtonHovered] = ImVec4(0.67f, 0.67f, 0.68f, 0.63f);
-                c[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.26f, 0.26f, 0.63f);
-            }
+						complete = true;
+						*open = false;
+					}
+				}
+			}
+			else {
+				ImVec4* c = ImGui::GetStyle().Colors;
+				c[ImGuiCol_Button] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+				c[ImGuiCol_ButtonHovered] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+				c[ImGuiCol_ButtonActive] = ImVec4(0.1f, 0.1f, 0.1f, 0.63f);
+				ImGui::Button("Load");
+				c[ImGuiCol_Button] = ImVec4(0.50f, 0.50f, 0.50f, 0.63f);
+				c[ImGuiCol_ButtonHovered] = ImVec4(0.67f, 0.67f, 0.68f, 0.63f);
+				c[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.26f, 0.26f, 0.63f);
+			}
 		}
 		else if (dialogInfo->type == ImGuiFileDialogType_SaveFile)
 		{
