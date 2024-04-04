@@ -3,59 +3,45 @@ project(voxenta)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
 set(APP_VERSION_MAJOR 1)
 set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET voxenta)
 
-add_subdirectory(imgui)
-include_directories(${PROJECT_SOURCE_DIR})
-add_executable(${APP_TARGET} main.cpp
-        windows/main_window.cpp
-        windows/main_window.h
-        windows/input_img_window.cpp
-        windows/input_img_window.h
-        windows/properties_window.cpp
-        windows/properties_window.h
-        imgui/imgui_filedialog.cpp
-        windows/output_img_window.cpp
-        windows/output_img_window.h
-        processing/image_processor.cpp
-        processing/image_processor.h
-        processing/processing_methods.cpp
-        processing/processing_methods.h
-        processing/processing_ui.cpp
-        processing/processing_ui.h
-        windows/about_window.cpp
-        windows/about_window.h
-        windows/win_prop.h
-        utils/data_containers.h)
-target_link_libraries(${APP_TARGET} imgui)
-
-# opencv
-#set(OpenCV_LIBRARIES ${OpenCV_LIBS})
-find_package( OpenCV REQUIRED )
-include_directories( ${OpenCV_INCLUDE_DIRS} )
-
-# glfw
+find_package(OpenCV REQUIRED)
 find_package(glfw3 REQUIRED)
-include_directories(${GLFW_INCLUDE_DIRS})
-link_libraries(${GLFW_LIBRARY_DIRS})
-
-# opengl
 find_package(OpenGL REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIRS})
-
-# glew
 find_package(GLEW REQUIRED)
-include_directories(${GLEW_INCLUDE_DIRS})
 
-target_link_libraries(
-        ${APP_TARGET}
+add_subdirectory(external/imgui)
+
+add_executable(${APP_TARGET}
+        src/main.cpp
+
+        src/processing/image_processor.cpp
+        src/processing/processing_methods.cpp
+        src/processing/processing_ui.cpp
+
+        src/windows/about_window.cpp
+        src/windows/input_img_window.cpp
+        src/windows/main_window.cpp
+        src/windows/output_img_window.cpp
+        src/windows/properties_window.cpp
+)
+
+target_include_directories(${APP_TARGET} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+        ${OpenCV_INCLUDE_DIRS}
+        ${GLFW_INCLUDE_DIRS}
+        ${OPENGL_INCLUDE_DIRS}
+        ${GLEW_INCLUDE_DIRS}
+)
+
+target_link_libraries(${APP_TARGET} PRIVATE
+        ${OpenCV_LIBS}
         glfw
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
-        ${EXTRA_LIBS}
-        ${OpenCV_LIBS}
+        ImGui
 )
