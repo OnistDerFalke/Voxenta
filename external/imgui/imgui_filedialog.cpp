@@ -10,6 +10,9 @@
 #include <filesystem>
 #include <sstream>
 
+#include <bits/ranges_algo.h>
+#include <magic.h>
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_filedialog.h"
@@ -45,15 +48,33 @@ void RefreshInfo(ImFileDialogInfo* dialogInfo)
 	}
 }
 
-bool ImGui::IsFileImage(const std::filesystem::path& p) {
-    std::vector<std::string> available_extensions = {".jpg", ".JPG", ".png", ".PNG"};
+bool ImGui::IsFileImage(const std::filesystem::path& p)
+{
+	magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
 
-    for (const auto& ext : available_extensions) {
-        if(p.has_extension())
-            if(p.extension() == ext)
-                return true;
-    }
-    return false;
+	if (magic_cookie == nullptr)
+	{
+		fprintf(stderr, "unable to initialize libmagic\n");
+		return false;
+	}
+
+	if (magic_load(magic_cookie, nullptr) != 0)
+	{
+		fprintf(stderr,"cannot load magic database - %s\n", magic_error(magic_cookie));
+		magic_close(magic_cookie);
+		return false;
+	}
+
+	constexpr std::array<std::string_view, 2> allowed_mimetypes = {"image/jpeg", "image/png"};
+	const std::string_view mimetype = magic_file(magic_cookie, p.c_str());
+
+	bool result = std::ranges::any_of(
+		allowed_mimetypes.begin(),
+		allowed_mimetypes.end(),
+		[mimetype] (std::string_view s) { return mimetype == s; });
+
+	magic_close(magic_cookie);
+	return result;
 }
 
 bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo, ImVec2 mws)

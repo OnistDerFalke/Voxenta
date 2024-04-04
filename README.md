@@ -8,13 +8,13 @@ Application was tested on Linux but it should also work after building it for Mi
 ### Fedora Linux
 
 ```bash
-glfw glfw-devel glew glew-devel opencv opencv-devel
+glfw glfw-devel glew glew-devel opencv opencv-devel file file-devel
 ```
 
 ### Arch Linux
 
 ```bash
-glfw glew opencv vtk hdf
+glfw glew opencv vtk hdf file
 ```
 
 ## Ready to use

@@ -8,10 +8,13 @@ set(APP_VERSION_MINOR 0)
 
 set(APP_TARGET voxenta)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 find_package(OpenCV REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(libmagic REQUIRED)
 
 add_subdirectory(external/imgui)
 
@@ -44,4 +47,5 @@ target_link_libraries(${APP_TARGET} PRIVATE
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         ImGui
+        libmagic
 )
