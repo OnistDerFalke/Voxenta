@@ -20,6 +20,11 @@ public:
     bool just_uploaded{};
     bool just_updated{};
 private:
+    enum Shortcuts {
+        LOAD,
+        SAVE,
+        NUM_SHORTCUTS
+    };
     ImVec2 mws;
     bool m_about_dialog_open{};
     about_window about;
@@ -32,6 +37,10 @@ private:
     containers::processing_data data;
     const char* features[5]{};
     int selected_item = 0;
+    bool shortcut_event(Shortcuts shortcut);
+    void handle_fileload();
+    void handle_filesave();
+    void handle_shortcuts();
 };
 
 #endif
