@@ -4,6 +4,8 @@
 #include "processing/image_processor.h"
 #include "processing/processing_ui.h"
 
+#include <nfd.hpp>
+
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
@@ -17,6 +19,9 @@ properties_window::properties_window(ImVec2 mws)
     this->features[2] = const_cast<char*>("Negative");
     this->features[3] = const_cast<char*>("Grayscale");
     this->features[4] = const_cast<char*>("Binarization");
+
+    this->last_load_path = std::filesystem::current_path();
+    this->last_save_path = std::filesystem::current_path();
 }
 
 /* Shows the properties window and it's context */
@@ -41,20 +46,58 @@ void properties_window::show() {
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load", "Ctrl+O")) {
-            m_file_dialog_open = true;
-            m_file_dialog_info.type = ImGuiFileDialogType_OpenFile;
-            m_file_dialog_info.title = "Load image";
-            m_file_dialog_info.fileName = "";
-            m_file_dialog_info.directoryPath = std::filesystem::current_path();
+            NFD::UniquePathN outPath;
+
+            //No need to diffirentiate between image formats
+            constexpr nfdfilteritem_t filters[1] = {
+                { "Images", "jpg,jpeg,jfif,png" }
+            };
+
+            nfdresult_t result = NFD::OpenDialog(
+                outPath,
+                filters,
+                IM_ARRAYSIZE(filters),
+                last_load_path.parent_path().c_str());
+
+            if (result == NFD_OKAY && outPath != nullptr) {
+                just_uploaded = true;
+                base_image = cv::imread(outPath.get());
+                //Image loaded sucessfully
+                if (base_image.data != nullptr) {
+                    last_load_path = outPath.get();
+                }
+                else {
+                    fprintf(stderr, "invalid file format\n");
+                }
+            }
+            else if (result == NFD_ERROR) {
+                fprintf(stderr, "nfd error: %s\n", NFD::GetError());
+            }
         }
         if (ImGui::MenuItem("Save", "Ctrl+S")) {
-            if(!modified_image.empty())
-            {
-                m_file_dialog_open = true;
-                m_file_dialog_info.type = ImGuiFileDialogType_SaveFile;
-                m_file_dialog_info.title = "Save image";
-                m_file_dialog_info.fileName = "";
-                m_file_dialog_info.directoryPath = std::filesystem::current_path();
+            if(!modified_image.empty()) {
+                NFD::UniquePathN outPath;
+
+                //Prefer lossless image formats
+                constexpr nfdfilteritem_t filters[2] = {
+                    { "PNG Image", "png" },
+                    { "JPEG Image", "jpg,jpeg,jfif" }
+                };
+
+                nfdresult_t result = NFD::SaveDialog(
+                    outPath,
+                    filters,
+                    IM_ARRAYSIZE(filters),
+                    last_save_path.parent_path().c_str(),
+                    !is_directory(last_load_path) ? (last_load_path.stem().string() + "_out").c_str() : nullptr);
+
+                if (result == NFD_OKAY && outPath != nullptr) {
+                    cv::imwrite(outPath.get(), modified_image);
+                    last_save_path = outPath.get();
+                }
+                else if (result == NFD_ERROR) {
+                    fprintf(stderr, "nfd error: %s\n", NFD::GetError());
+                }
             }
         }
         ImGui::EndMenu();
@@ -90,27 +133,6 @@ void properties_window::show() {
     //Getting image effect properties data set in UI
     if(!base_image.empty())
         data = proc_ui.run_method(selected_item);
-
-    //Handles the filedialog for loading and saving image
-    if(ImGui::FileDialog(&m_file_dialog_open, &m_file_dialog_info, mws)) {
-        file_path = m_file_dialog_info.resultPath;
-
-        //Saving file from obtained image
-        if(m_file_dialog_info.type == ImGuiFileDialogType_SaveFile)
-        {
-            if (!file_path.empty() && (!modified_image.empty())) {
-               cv::imwrite(file_path.c_str(), modified_image);
-            }
-        }
-
-        //Getting image from chosen file
-        if(m_file_dialog_info.type == ImGuiFileDialogType_OpenFile) {
-            just_uploaded = true;
-            if (!file_path.empty()) {
-                base_image = cv::imread(file_path.c_str());
-            }
-        }
-    }
 
     //Applying the effects with retrieved properties data
     if(!base_image.empty())

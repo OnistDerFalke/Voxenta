@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <nfd.hpp>
 
 /* Error callback for OpenGL*/
 void main_window::error_callback(int error, const char* description)
@@ -92,6 +93,11 @@ main_window::main_window() {
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
        return;
+
+    if (NFD::Init() != NFD_OKAY) {
+        fprintf(stderr, "nfd error: %s\n", NFD::GetError());
+        return;
+    }
 
 #if defined(IMGUI_IMPL_OPENGL_ES2)
     // GL ES 2.0 + GLSL 100
@@ -187,6 +193,7 @@ main_window::main_window() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    NFD::Quit();
     glfwDestroyWindow(window);
     glfwTerminate();
 }

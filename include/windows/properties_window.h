@@ -5,8 +5,9 @@
 #include "processing/image_processor.h"
 #include "about_window.h"
 
+#include <filesystem>
+
 #include <imgui.h>
-#include <imgui_filedialog.h>
 #include <opencv4/opencv2/opencv.hpp>
 
 class properties_window {
@@ -20,11 +21,10 @@ public:
     bool just_updated{};
 private:
     ImVec2 mws;
-    bool m_file_dialog_open{};
     bool m_about_dialog_open{};
-    ImFileDialogInfo m_file_dialog_info;
     about_window about;
-    std::filesystem::path file_path;
+    std::filesystem::path last_load_path;
+    std::filesystem::path last_save_path;
     cv::Mat base_image;
     cv::Mat modified_image;
     processing_ui proc_ui;
