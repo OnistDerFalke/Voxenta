@@ -88,7 +88,6 @@ void set_ui_style()
 }
 
 main_window::main_window() {
-
     //Error callback for OpenGL
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())

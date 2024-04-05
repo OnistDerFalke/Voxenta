@@ -10,14 +10,7 @@ public:
     processing_methods();
     cv::Mat run_method(cv::Mat image, int index, containers::processing_data data);
 private:
-    std::vector<cv::Mat (processing_methods::*)(cv::Mat, containers::processing_data)> functions;
-
-    //processing methods
-    cv::Mat brightness(cv::Mat image, containers::processing_data data);
-    cv::Mat contrast(cv::Mat image, containers::processing_data data);
-    cv::Mat negative(cv::Mat image, containers::processing_data data);
-    cv::Mat grayscale(cv::Mat image, containers::processing_data data);
-    cv::Mat binarization(cv::Mat image, containers::processing_data data);
+    std::vector<std::variant<std::function<cv::Mat(cv::Mat, containers::processing_data)>>> functions;
 };
 
 #endif
