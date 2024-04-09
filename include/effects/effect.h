@@ -2,7 +2,7 @@
 #ifndef VOXENTA_EFFECT_H
 #define VOXENTA_EFFECT_H
 
-#include "utils/data_containers.h"
+#include "../utils/data_containers.h"
 
 #include <opencv2/opencv.hpp>
 

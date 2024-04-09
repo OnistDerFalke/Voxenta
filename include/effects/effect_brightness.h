@@ -3,7 +3,7 @@
 
 #include "utils/data_containers.h"
 #include "imgui.h"
-#include "processing/effect.h"
+#include "effect.h"
 
 #include <opencv2/core/mat.hpp>
 

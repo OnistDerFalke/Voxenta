@@ -1,10 +1,10 @@
 #include "processing/processing_methods.h"
 
-#include "../effects/effect_brightness.h"
-#include "../effects/effect_contrast.h"
-#include "../effects/effect_negative.h"
-#include "../effects/effect_grayscale.h"
-#include "../effects/effect_binarization.h"
+#include "effects/effect_brightness.h"
+#include "effects/effect_contrast.h"
+#include "effects/effect_negative.h"
+#include "effects/effect_grayscale.h"
+#include "effects/effect_binarization.h"
 
 #include <utility>
 

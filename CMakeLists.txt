@@ -16,6 +16,8 @@ find_package(GLEW REQUIRED)
 add_subdirectory(external/imgui)
 add_subdirectory(external/nativefiledialog-extended)
 
+file(GLOB_RECURSE EFFECT_FILES "include/effects/*.h")
+
 add_executable(${APP_TARGET}
         src/main.cpp
 
@@ -28,12 +30,8 @@ add_executable(${APP_TARGET}
         src/windows/main_window.cpp
         src/windows/output_img_window.cpp
         src/windows/properties_window.cpp
-        effects/effect_brightness.h
-        effects/effect_grayscale.h
-        effects/effect_contrast.h
-        effects/effect_negative.h
-        effects/effect_binarization.h
-        include/processing/effect.h
+
+        ${EFFECT_FILES}
 )
 
 target_include_directories(${APP_TARGET} PRIVATE

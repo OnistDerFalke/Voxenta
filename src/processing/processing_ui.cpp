@@ -1,10 +1,11 @@
 #include "processing/processing_ui.h"
-#include "processing/effect.h"
-#include "../../effects/effect_brightness.h"
-#include "../../effects/effect_contrast.h"
-#include "../../effects/effect_negative.h"
-#include "../../effects/effect_grayscale.h"
-#include "../../effects/effect_binarization.h"
+
+#include "effects/effect.h"
+#include "effects/effect_brightness.h"
+#include "effects/effect_contrast.h"
+#include "effects/effect_negative.h"
+#include "effects/effect_grayscale.h"
+#include "effects/effect_binarization.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
