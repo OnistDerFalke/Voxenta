@@ -1,8 +1,6 @@
 #ifndef VOXENTA_PROPERTIES_WINDOW_H
 #define VOXENTA_PROPERTIES_WINDOW_H
 
-#include "processing/processing_ui.h"
-#include "processing/image_processor.h"
 #include "about_window.h"
 
 #include <filesystem>
@@ -32,11 +30,7 @@ private:
     std::filesystem::path last_save_path;
     cv::Mat base_image;
     cv::Mat modified_image;
-    processing_ui proc_ui;
-    image_processor processor;
-    containers::processing_data data;
-    const char* features[5]{};
-    int selected_item = 0;
+    int current_effect_idx;
     bool shortcut_event(Shortcuts shortcut);
     void handle_fileload();
     void handle_filesave();

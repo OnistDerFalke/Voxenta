@@ -29,12 +29,7 @@ Then you can save it using *File->Save* option from menu. Use image file extensi
 ![image](https://github.com/OnistDerFalke/Voxenta/assets/75864407/3d039871-3b82-4005-9a10-a964bb409278)
 
 ## Adding new effects
-To add an effect you have to:
-1. Update the number of effects in *properties_window.h -> features*.
-2. Add the feature name to the vector in properties_window.cpp constructor.
-3. Add UI method to processing UI and add it's pointer to the functions vector in constructor.
-4. Add processing method to processing_methods and add it's pointer to the functions vector in constructor.
-5. Remember to save UI state and set your default values as it is done in examples.
+To add an effect you have to create a new `effect_<name>.cpp` file in the `src/effects/` directory and re-run CMake.
 
 ## License
 This application is provided under the terms of the **MIT License**, which means you have the right to copy, modify, and adapt our source code to your needs without obtaining my permission. 

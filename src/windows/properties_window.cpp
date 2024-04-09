@@ -1,24 +1,14 @@
 #include "windows/properties_window.h"
 #include "windows/about_window.h"
 
-#include "processing/image_processor.h"
-#include "processing/processing_ui.h"
+#include "effects/effect.h"
 
 #include <nfd.hpp>
 
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
-    this->data = containers::processing_data();
-    this->proc_ui = processing_ui();
-    this->processor = image_processor();
-
-    //Available features
-    this->features[0] = const_cast<char*>("Brightness");
-    this->features[1] = const_cast<char*>("Contrast");
-    this->features[2] = const_cast<char*>("Negative");
-    this->features[3] = const_cast<char*>("Grayscale");
-    this->features[4] = const_cast<char*>("Binarization");
+    this->current_effect_idx = 0;
 
     this->last_load_path = std::filesystem::current_path();
     this->last_save_path = std::filesystem::current_path();
@@ -26,7 +16,6 @@ properties_window::properties_window(ImVec2 mws)
 
 /* Shows the properties window and it's context */
 void properties_window::show() {
-
     just_uploaded = false; //image was loaded event
     just_updated = false; //image changed (effect changed or was modified) event
 
@@ -65,14 +54,24 @@ void properties_window::show() {
     //Shows about-window if it was opened in from menu
     about.show(&m_about_dialog_open, mws);
 
-    //To choose the effect image needs to be loaded
-    if(!base_image.empty()) {
-        //Effect combo
-        ImGui::BeginChild("effect_choice",
-                          ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
-        ImGui::Combo("##combo", &selected_item, features, IM_ARRAYSIZE(features));
-        ImGui::EndChild();
+    //Effect combo
+    ImGui::BeginChild("effect_choice",
+                      ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
+    if (ImGui::BeginCombo("##effect_combo", g_effects[this->current_effect_idx]->get_name())) {
+        for (int n = 0; n < g_effects.size(); n++) {
+            const bool is_selected = (current_effect_idx == n);
+            if (ImGui::Selectable(g_effects[n]->get_name(), is_selected)) {
+                just_updated = true;
+                current_effect_idx = n;
+            }
+
+            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
     }
+    ImGui::EndChild();
     ImGui::Dummy(ImVec2(0, 2));
 
     //Properties of effect
@@ -83,14 +82,10 @@ void properties_window::show() {
     ImGui::Dummy(ImVec2(0, 5));
 
     //Getting image effect properties data set in UI
-    if(!base_image.empty())
-        data = proc_ui.run_method(selected_item);
-
-    //Applying the effects with retrieved properties data
-    if(!base_image.empty())
-        modified_image = processor.process_image(base_image, selected_item, data, just_uploaded);
-
-    just_updated = processor.did_update();
+    just_updated = just_updated || g_effects[this->current_effect_idx]->run_ui();
+    if(!base_image.empty() && (just_updated || modified_image.empty())) {
+        modified_image = g_effects[this->current_effect_idx]->run(base_image);
+    }
 
     ImGui::EndChild();
     ImGui::SameLine();
@@ -105,7 +100,8 @@ void properties_window::show() {
     ImGui::Dummy(ImVec2(0, 5));
     if(base_image.empty())
         ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
-    else ImGui::TextWrapped("%s", data.description);
+    else
+        ImGui::TextWrapped("%s", g_effects[this->current_effect_idx]->get_description());
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();

@@ -16,14 +16,10 @@ find_package(GLEW REQUIRED)
 add_subdirectory(external/imgui)
 add_subdirectory(external/nativefiledialog-extended)
 
-file(GLOB_RECURSE EFFECT_FILES "include/effects/*.h")
+file(GLOB_RECURSE EFFECT_FILES "src/effects/*.cpp")
 
 add_executable(${APP_TARGET}
         src/main.cpp
-
-        src/processing/image_processor.cpp
-        src/processing/processing_methods.cpp
-        src/processing/processing_ui.cpp
 
         src/windows/about_window.cpp
         src/windows/input_img_window.cpp
