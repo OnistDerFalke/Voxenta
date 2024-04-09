@@ -178,6 +178,7 @@ void properties_window::handle_fileload() {
 
     if (result == NFD_OKAY && outPath != nullptr) {
         just_uploaded = true;
+        just_updated = true;
         base_image = cv::imread(outPath.get());
 
         //Image loaded successfully
