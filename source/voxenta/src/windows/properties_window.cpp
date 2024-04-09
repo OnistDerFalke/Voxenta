@@ -1,14 +1,19 @@
-#include "windows/properties_window.h"
-#include "windows/about_window.h"
+#include "voxenta/windows/properties_window.h"
+#include "voxenta/windows/about_window.h"
 
-#include "effects/effect.h"
+#include "voxenta/effects/effect.h"
 
+#include <dlfcn.h>
 #include <nfd.hpp>
 
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
+
+    this->effects_lib = nullptr;
+    this->effects = nullptr;
     this->current_effect_idx = 0;
+    this->load_effects();
 
     this->last_load_path = std::filesystem::current_path();
     this->last_save_path = std::filesystem::current_path();
@@ -41,6 +46,8 @@ void properties_window::show() {
             handle_fileload();
         if (ImGui::MenuItem("Save", "Ctrl+S"))
             handle_filesave();
+        if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
+            load_effects();
         ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("About")) {
@@ -57,10 +64,10 @@ void properties_window::show() {
     //Effect combo
     ImGui::BeginChild("effect_choice",
                       ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
-    if (ImGui::BeginCombo("##effect_combo", g_effects[this->current_effect_idx]->get_name())) {
-        for (int n = 0; n < g_effects.size(); n++) {
+    if (ImGui::BeginCombo("##effect_combo", effects->at(current_effect_idx)->get_name())) {
+        for (int n = 0; n < effects->size(); n++) {
             const bool is_selected = (current_effect_idx == n);
-            if (ImGui::Selectable(g_effects[n]->get_name(), is_selected)) {
+            if (ImGui::Selectable(effects->at(n)->get_name(), is_selected)) {
                 just_updated = true;
                 current_effect_idx = n;
             }
@@ -82,9 +89,9 @@ void properties_window::show() {
     ImGui::Dummy(ImVec2(0, 5));
 
     //Getting image effect properties data set in UI
-    just_updated = just_updated || g_effects[this->current_effect_idx]->run_ui();
+    just_updated = just_updated || effects->at(current_effect_idx)->run_ui();
     if(!base_image.empty() && (just_updated || modified_image.empty())) {
-        modified_image = g_effects[this->current_effect_idx]->run(base_image);
+        modified_image = effects->at(this->current_effect_idx)->run(base_image);
     }
 
     ImGui::EndChild();
@@ -101,7 +108,7 @@ void properties_window::show() {
     if(base_image.empty())
         ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
     else
-        ImGui::TextWrapped("%s", g_effects[this->current_effect_idx]->get_description());
+        ImGui::TextWrapped("%s", effects->at(this->current_effect_idx)->get_description());
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();
@@ -122,6 +129,16 @@ cv::Mat properties_window::get_modified_image() {
     return modified_image;
 }
 
+void properties_window::load_effects() {
+    if (this->effects_lib != nullptr) {
+        dlclose(this->effects_lib);
+    }
+
+    this->effects_lib = dlopen("./libvoxenta_effects.so", RTLD_LAZY | RTLD_DEEPBIND);
+    this->effects = reinterpret_cast<decltype(&voxenta_effects)>(dlsym(effects_lib, "voxenta_effects"))();
+    this->current_effect_idx = std::clamp(this->current_effect_idx, 0ul, this->effects->size());
+}
+
 /* Checks if event was started */
 bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
     if(!ImGui::GetIO().KeyCtrl) return false;
@@ -132,6 +149,9 @@ bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
             break;
         case SAVE:
             shortcut_activated = ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_S));
+            break;
+        case RELOAD_EFFECTS:
+            shortcut_activated = ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_R));
             break;
         default:
             break;
@@ -210,6 +230,10 @@ void properties_window::handle_shortcuts() {
             case SAVE:
                 if (shortcut_event(SAVE))
                     handle_filesave();
+                break;
+            case RELOAD_EFFECTS:
+                if (shortcut_event(RELOAD_EFFECTS))
+                    load_effects();
                 break;
             default:
                 break;

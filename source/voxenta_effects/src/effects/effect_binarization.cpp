@@ -1,8 +1,8 @@
-#include "effects/effect.h"
-#include "imgui.h"
+#include "voxenta/effects/effect.h"
 
 #include <array>
 
+#include <imgui.h>
 #include <opencv2/core/mat.hpp>
 
 class effect_binarization final : public effect {
@@ -15,7 +15,7 @@ class effect_binarization final : public effect {
         METHOD_AUTO_OTSU,
         METHOD_AUTO_TRIANGLE,
 
-        METHOD_COUNT
+        NUM_METHOD
     };
 
     enum binarization_method_param_t {
@@ -24,7 +24,7 @@ class effect_binarization final : public effect {
         PARAM_GRAYSCALE = 1 << 2,
     };
 
-    std::array<cv::ThresholdTypes, METHOD_COUNT> binarization_method_types = {
+    std::array<cv::ThresholdTypes, NUM_METHOD> binarization_method_types = {
         cv::THRESH_BINARY,
         cv::THRESH_BINARY_INV,
         cv::THRESH_TRUNC,
@@ -34,7 +34,7 @@ class effect_binarization final : public effect {
         cv::THRESH_TRIANGLE
     };
 
-    std::array<uint, METHOD_COUNT> binarization_method_params = {
+    std::array<uint, NUM_METHOD> binarization_method_params = {
         PARAM_THRESHOLD | PARAM_MAXVALUE | PARAM_GRAYSCALE,
         PARAM_THRESHOLD | PARAM_MAXVALUE | PARAM_GRAYSCALE,
         PARAM_THRESHOLD | PARAM_GRAYSCALE,
@@ -44,7 +44,7 @@ class effect_binarization final : public effect {
         PARAM_MAXVALUE
     };
 
-    std::array<const char*, METHOD_COUNT> binarization_method_names = {
+    std::array<const char*, NUM_METHOD> binarization_method_names = {
         "Manual",
         "Manual Inverted",
         "Manual To Zero",
@@ -54,7 +54,7 @@ class effect_binarization final : public effect {
         "Automated Triangle"
     };
 
-    std::array<const char*, METHOD_COUNT> binarization_method_descriptions = {
+    std::array<const char*, NUM_METHOD> binarization_method_descriptions = {
         "Changes grayscale image to binary color image using manually chosen threshold. If image is not in grayscale it converts it to this form.\n\n"
         "Parameters:\n"
         "- Threshold: Pixels above threshold have max value, otherwise black.\n"
@@ -156,4 +156,5 @@ public:
     }
 };
 
+#include "../effect_common.inl"
 REGISTER_EFFECT(effect_binarization)

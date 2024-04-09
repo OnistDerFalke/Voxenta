@@ -1,4 +1,4 @@
-#include "windows/main_window.h"
+#include "voxenta/windows/main_window.h"
 
 int main(int, char**)
 {

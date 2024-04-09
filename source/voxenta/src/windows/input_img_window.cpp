@@ -1,4 +1,4 @@
-#include "windows/input_img_window.h"
+#include "voxenta/windows/input_img_window.h"
 
 #include <GL/gl.h>
 #include <imgui.h>
@@ -75,4 +75,3 @@ void input_img_window::set_mws(ImVec2 size) {
     this->mws = size;
     need_update = true;
 }
-

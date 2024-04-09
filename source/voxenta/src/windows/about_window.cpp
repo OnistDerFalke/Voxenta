@@ -1,4 +1,4 @@
-#include "windows/about_window.h"
+#include "voxenta/windows/about_window.h"
 
 #include <imgui.h>
 
@@ -36,5 +36,3 @@ void about_window::show(bool* open, ImVec2 mws) {
         ImGui::End();
     }
 }
-
-

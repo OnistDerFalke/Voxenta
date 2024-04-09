@@ -1,7 +1,8 @@
 #ifndef VOXENTA_PROPERTIES_WINDOW_H
 #define VOXENTA_PROPERTIES_WINDOW_H
 
-#include "about_window.h"
+#include "voxenta/windows/about_window.h"
+#include "voxenta/effects/effect.h"
 
 #include <filesystem>
 
@@ -21,6 +22,7 @@ private:
     enum Shortcuts {
         LOAD,
         SAVE,
+        RELOAD_EFFECTS,
         NUM_SHORTCUTS
     };
     ImVec2 mws;
@@ -30,7 +32,10 @@ private:
     std::filesystem::path last_save_path;
     cv::Mat base_image;
     cv::Mat modified_image;
-    int current_effect_idx;
+    void *effects_lib;
+    std::vector<effect*>* effects;
+    size_t current_effect_idx;
+    void load_effects();
     bool shortcut_event(Shortcuts shortcut);
     void handle_fileload();
     void handle_filesave();

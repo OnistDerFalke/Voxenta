@@ -16,13 +16,8 @@ public:
     virtual cv::Mat run(cv::Mat image) = 0;
 };
 
-inline std::vector<effect*> g_effects;
-
-inline effect::effect() {
-    g_effects.emplace_back(this);
+extern "C" {
+    std::vector<effect*>* voxenta_effects();
 }
-
-#define REGISTER_EFFECT(effect_name) \
-    namespace detail { static inline effect_name g_##effect_name; }
 
 #endif

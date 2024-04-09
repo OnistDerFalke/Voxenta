@@ -1,9 +1,8 @@
-#include "windows/main_window.h"
-
-#include "windows/input_img_window.h"
-#include "windows/output_img_window.h"
-#include "windows/properties_window.h"
-#include "windows/win_prop.h"
+#include "voxenta/windows/main_window.h"
+#include "voxenta/windows/input_img_window.h"
+#include "voxenta/windows/output_img_window.h"
+#include "voxenta/windows/properties_window.h"
+#include "voxenta/windows/win_prop.h"
 
 #include <cstdio>
 #include <imgui_impl_glfw.h>

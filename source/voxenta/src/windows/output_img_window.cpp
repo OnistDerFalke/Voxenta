@@ -1,4 +1,4 @@
-#include "windows/output_img_window.h"
+#include "voxenta/windows/output_img_window.h"
 
 #include <GL/gl.h>
 #include <imgui.h>
@@ -10,7 +10,7 @@ output_img_window::output_img_window(ImVec2 mws) {
 
 /* Shows the window with a modified input image */
 void output_img_window::show(cv::Mat image, bool just_uploaded) {
-    
+
     //Setting new position and size
     auto border = std::min(mws.x, mws.y) * 0.01f;
     auto input_window_pos = ImVec2((mws.x + border)/2,border);

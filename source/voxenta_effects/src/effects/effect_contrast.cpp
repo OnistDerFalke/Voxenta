@@ -1,6 +1,6 @@
-#include "effects/effect.h"
-#include "imgui.h"
+#include "voxenta/effects/effect.h"
 
+#include <imgui.h>
 #include <opencv2/core/mat.hpp>
 
 class effect_contrast final : effect {
@@ -40,4 +40,5 @@ public:
     }
 };
 
+#include "../effect_common.inl"
 REGISTER_EFFECT(effect_contrast)
