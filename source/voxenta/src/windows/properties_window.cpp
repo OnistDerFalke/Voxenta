@@ -137,6 +137,8 @@ void properties_window::load_effects() {
     this->effects_lib = dlopen("./libvoxenta_effects.so", RTLD_LAZY | RTLD_DEEPBIND);
     this->effects = reinterpret_cast<decltype(&voxenta_effects)>(dlsym(effects_lib, "voxenta_effects"))();
     this->current_effect_idx = std::clamp(this->current_effect_idx, 0ul, this->effects->size());
+
+    this->just_updated = true;
 }
 
 /* Checks if event was started */
