@@ -37,8 +37,7 @@ containers::processing_data processing_ui::run_method(int index) {
     if (index != last_index)
         first_frame = true;
     last_index = index;
-
-    auto& function_ptr = std::get<std::function<containers::processing_data(bool*, containers::value_container*)>>(functions[index]);
-    return function_ptr(&first_frame, &ui_state);
+    
+    return functions[index](&first_frame, &ui_state);
 }
 

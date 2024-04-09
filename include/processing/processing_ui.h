@@ -12,7 +12,7 @@ public:
     processing_ui();
     containers::processing_data run_method(int index);
 private:
-    std::vector<std::variant<std::function<containers::processing_data(bool*, containers::value_container*)>>> functions;
+    std::vector<std::function<containers::processing_data(bool*, containers::value_container*)>> functions;
     containers::value_container ui_state;
     bool first_frame{};
     int last_index;

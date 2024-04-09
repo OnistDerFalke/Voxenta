@@ -10,7 +10,7 @@ public:
     processing_methods();
     cv::Mat run_method(cv::Mat image, int index, containers::processing_data data);
 private:
-    std::vector<std::variant<std::function<cv::Mat(cv::Mat, containers::processing_data)>>> functions;
+    std::vector<std::function<cv::Mat(cv::Mat, containers::processing_data)>> functions;
 };
 
 #endif

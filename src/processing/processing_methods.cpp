@@ -26,6 +26,5 @@ processing_methods::processing_methods() {
 
 /* Runs the method assigned to the effect index, returns modified image */
 cv::Mat processing_methods::run_method(cv::Mat image, int index, containers::processing_data data) {
-    auto& function_ptr = std::get<std::function<cv::Mat(cv::Mat, containers::processing_data)>>(functions[index]);
-    return function_ptr(std::move(image), std::move(data));
+    return functions[index](std::move(image), std::move(data));
 }
