@@ -7,6 +7,7 @@ effect::effect() {
 }
 
 extern "C" {
+    __attribute__((visibility("default")))
     std::vector<effect*>* voxenta_effects() {
         return &g_effects;
     }
