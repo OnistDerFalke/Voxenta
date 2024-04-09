@@ -86,10 +86,12 @@ class effect_binarization final : public effect {
 
         "Changes grayscale image to binarized with automated threshold computed using Otsu method."
         " If image is not in grayscale it converts it to this form.\n\n"
+        "Parameters:\n"
         "- Max Value: Value of a pixel that initial value was lower or equal the threshold.",
 
         "Changes grayscale image to binarized with automated threshold computed using Triangle method."
         " If image is not in grayscale it converts it to this form.\n\n"
+        "Parameters:\n"
         "- Max Value: Value of a pixel that initial value was lower or equal the threshold."
     };
 
