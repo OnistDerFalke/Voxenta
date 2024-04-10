@@ -2,7 +2,6 @@
 #define VOXENTA_EFFECT_H
 
 #include <vector>
-
 #include <opencv2/opencv.hpp>
 
 class effect {
@@ -14,6 +13,8 @@ public:
     virtual const char* get_description() = 0;
     virtual bool run_ui() = 0;
     virtual cv::Mat run(cv::Mat image) = 0;
+
+    static void convert_to_rgb(cv::Mat* img);
 };
 
 extern "C" {

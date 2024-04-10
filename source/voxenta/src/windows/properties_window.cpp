@@ -14,9 +14,11 @@ properties_window::properties_window(ImVec2 mws)
     this->effects = nullptr;
     this->current_effect_idx = 0;
     this->load_effects();
-
+    this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
     this->last_load_path = std::filesystem::current_path();
     this->last_save_path = std::filesystem::current_path();
+
+    set_shortcuts();
 }
 
 /* Shows the properties window and it's context */
@@ -43,9 +45,16 @@ void properties_window::show() {
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load", "Ctrl+O"))
-            handle_fileload();
+            file_load();
         if (ImGui::MenuItem("Save", "Ctrl+S"))
-            handle_filesave();
+            file_save();
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Effects")) {
+        if (ImGui::MenuItem("Apply", "Ctrl+A"))
+            apply_effect();
+        if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+            undo_effect();
         if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
             load_effects();
         ImGui::EndMenu();
@@ -129,6 +138,7 @@ cv::Mat properties_window::get_modified_image() {
     return modified_image;
 }
 
+/* Loads available effects*/
 void properties_window::load_effects() {
     if (this->effects_lib != nullptr) {
         dlclose(this->effects_lib);
@@ -141,28 +151,34 @@ void properties_window::load_effects() {
     this->just_updated = true;
 }
 
+void properties_window::apply_effect() {
+    history.push(base_image.clone());
+    base_image = modified_image.clone();
+    just_updated = true;
+    just_uploaded = true;
+}
+
+void properties_window::undo_effect() {
+    if(!history.empty()) {
+        base_image = history.top().clone();
+        history.pop();
+        just_updated = true;
+        just_uploaded = true;
+    }
+}
+
 /* Checks if event was started */
 bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
-    if(!ImGui::GetIO().KeyCtrl) return false;
-    bool shortcut_activated = false;
-    switch (shortcut) {
-        case LOAD:
-            shortcut_activated = ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_O));
-            break;
-        case SAVE:
-            shortcut_activated = ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_S));
-            break;
-        case RELOAD_EFFECTS:
-            shortcut_activated = ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_R));
-            break;
-        default:
-            break;
+    if(!ImGui::GetIO().KeyCtrl) {
+        return false;
     }
-    return shortcut_activated;
+    if(!ImGui::IsKeyPressed(shortcut_keys[shortcut]))
+        shortcut_active[shortcut] = false;
+    return ImGui::IsKeyPressed(shortcut_keys[shortcut]);
 }
 
 /* Handles loading the image */
-void properties_window::handle_fileload() {
+void properties_window::file_load() {
     NFD::UniquePathN outPath;
 
     //No need to differentiate between image formats
@@ -179,6 +195,7 @@ void properties_window::handle_fileload() {
     if (result == NFD_OKAY && outPath != nullptr) {
         just_uploaded = true;
         just_updated = true;
+        std::stack<cv::Mat>().swap(history);
         base_image = cv::imread(outPath.get());
 
         //Image loaded successfully
@@ -195,7 +212,7 @@ void properties_window::handle_fileload() {
 }
 
 /* Handles saving the image */
-void properties_window::handle_filesave() {
+void properties_window::file_save() {
     if(!modified_image.empty()) {
         NFD::UniquePathN outPath;
 
@@ -225,21 +242,26 @@ void properties_window::handle_filesave() {
 /* Handles keyboard hotkeys/shortcuts */
 void properties_window::handle_shortcuts() {
     for (int i = 0; i < Shortcuts::NUM_SHORTCUTS; ++i) {
-        switch (static_cast<Shortcuts>(i)) {
-            case LOAD:
-                if (shortcut_event(LOAD))
-                    handle_fileload();
-                break;
-            case SAVE:
-                if (shortcut_event(SAVE))
-                    handle_filesave();
-                break;
-            case RELOAD_EFFECTS:
-                if (shortcut_event(RELOAD_EFFECTS))
-                    load_effects();
-                break;
-            default:
-                break;
+        if (shortcut_event(static_cast<Shortcuts>(i)) && !shortcut_active[i]) {
+            shortcut_active[i] = true;
+            (this->*shortcut_methods[i])();
         }
     }
+}
+
+void properties_window::set_shortcuts() {
+    this->shortcut_methods.resize(Shortcuts::NUM_SHORTCUTS);
+    this->shortcut_keys.resize(Shortcuts::NUM_SHORTCUTS);
+
+    this->shortcut_methods[Shortcuts::LOAD] = &properties_window::file_load;
+    this->shortcut_methods[Shortcuts::SAVE] = &properties_window::file_save;
+    this->shortcut_methods[Shortcuts::RELOAD_EFFECTS] = &properties_window::load_effects;
+    this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::apply_effect;
+    this->shortcut_methods[Shortcuts::UNDO_EFFECT] = &properties_window::undo_effect;
+
+    this->shortcut_keys[Shortcuts::LOAD] =  ImGui::GetKeyIndex(ImGuiKey_O);
+    this->shortcut_keys[Shortcuts::SAVE] = ImGui::GetKeyIndex(ImGuiKey_S);
+    this->shortcut_keys[Shortcuts::RELOAD_EFFECTS] =  ImGui::GetKeyIndex(ImGuiKey_R);
+    this->shortcut_keys[Shortcuts::APPLY_EFFECT] = ImGui::GetKeyIndex(ImGuiKey_A);
+    this->shortcut_keys[Shortcuts::UNDO_EFFECT] =  ImGui::GetKeyIndex(ImGuiKey_Z);
 }

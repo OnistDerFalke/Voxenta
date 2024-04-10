@@ -21,6 +21,8 @@ public:
 
     cv::Mat run(cv::Mat image) override
     {
+        effect::convert_to_rgb(&image);
+
         cv::Mat final_image = cv::Mat::zeros(image.size(), image.type());
         for (int y = 0; y < image.rows; y++) {
             for (int x = 0; x < image.cols; x++) {

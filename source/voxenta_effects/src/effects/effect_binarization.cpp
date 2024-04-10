@@ -141,6 +141,7 @@ public:
     cv::Mat run(cv::Mat image) override
     {
         cv::Mat final_image, grayscale_image;
+        effect::convert_to_rgb(&image);
         cv::cvtColor(image, grayscale_image, cv::COLOR_BGR2GRAY);
 
         const auto flags = binarization_method_params[m_method];

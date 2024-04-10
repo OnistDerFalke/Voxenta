@@ -9,6 +9,8 @@
 #include <imgui.h>
 #include <opencv4/opencv2/opencv.hpp>
 
+#include <stack>
+
 class properties_window {
 public:
     explicit properties_window(ImVec2 mws);
@@ -23,6 +25,8 @@ private:
         LOAD,
         SAVE,
         RELOAD_EFFECTS,
+        APPLY_EFFECT,
+        UNDO_EFFECT,
         NUM_SHORTCUTS
     };
     ImVec2 mws;
@@ -32,13 +36,21 @@ private:
     std::filesystem::path last_save_path;
     cv::Mat base_image;
     cv::Mat modified_image;
+    std::stack<cv::Mat> history;
     void *effects_lib;
     std::vector<effect*>* effects;
     size_t current_effect_idx;
-    void load_effects();
+    std::vector<bool> shortcut_active;
+    std::vector<void (properties_window::*) ()> shortcut_methods;
+    std::vector<ImGuiKey> shortcut_keys;
+
+    void set_shortcuts();
     bool shortcut_event(Shortcuts shortcut);
-    void handle_fileload();
-    void handle_filesave();
+    void file_load();
+    void file_save();
+    void load_effects();
+    void apply_effect();
+    void undo_effect();
     void handle_shortcuts();
 };
 

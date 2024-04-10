@@ -25,11 +25,11 @@ void about_window::show(bool* open, ImVec2 mws) {
                     "or other libraries. Application was tested on Linux but it should also work after "
                     "building it for Microsoft Windows environment.\n\n"
                     "© 2024 OnistEngine.\n\n"
-                    "This application is provided under the terms of the\n"
-                    "MIT Licence, which means you have the right to copy,\n"
-                    "modify, and adapt our source code to your needs \n"
-                    "without obtaining my permission. However, please \n"
-                    "ensure to retain appropriate copyright notices and\n"
+                    "This application is provided under the terms of the "
+                    "MIT Licence, which means you have the right to copy, "
+                    "modify, and adapt our source code to your needs "
+                    "without obtaining my permission. However, please "
+                    "ensure to retain appropriate copyright notices and "
                     "comply with the terms of the license.\n\n"
                     "Thank you for using Voxenta!");
         ImGui::EndChild();
