@@ -18,8 +18,4 @@ protected:
     static void convert_to_rgb(cv::Mat* img);
 };
 
-extern "C" {
-    std::vector<effect*>* voxenta_effects();
-}
-
 #endif

@@ -1,6 +1,9 @@
 #include "voxenta/effects/effect.h"
 
-std::vector<effect*> g_effects;
+extern "C" {
+    __attribute__((visibility("default")))
+    std::vector<effect*> g_effects;
+}
 
 effect::effect() {
     g_effects.emplace_back(this);
@@ -23,12 +26,5 @@ void effect::convert_to_rgb(cv::Mat* img) {
     }
     else {
         fprintf(stderr, "unable to convert image \n");
-    }
-}
-
-extern "C" {
-    __attribute__((visibility("default")))
-    std::vector<effect*>* voxenta_effects() {
-        return &g_effects;
     }
 }
