@@ -10,6 +10,7 @@ add_executable(voxenta
 
 target_include_directories(voxenta PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        $<TARGET_PROPERTY:voxenta_effects,INTERFACE_INCLUDE_DIRECTORIES>
 
         ${OpenCV_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
@@ -18,8 +19,6 @@ target_include_directories(voxenta PRIVATE
 )
 
 target_link_libraries(voxenta PRIVATE
-        $<COMPILE_ONLY:voxenta_effects>
-
         ${OpenCV_LIBS}
         glfw
         ${OPENGL_LIBRARIES}
@@ -27,3 +26,5 @@ target_link_libraries(voxenta PRIVATE
         ImGui
         nfd
 )
+
+set_property(TARGET voxenta PROPERTY ENABLE_EXPORTS ON)

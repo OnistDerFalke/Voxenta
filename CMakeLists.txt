@@ -16,8 +16,7 @@ add_subdirectory(source/voxenta_effects)
 add_subdirectory(source/voxenta)
 
 add_custom_target(voxenta_copy_deps
-        DEPENDS $<TARGET_FILE:ImGui> $<TARGET_FILE:voxenta_effects>
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:ImGui> $<TARGET_FILE_DIR:voxenta>
+        DEPENDS $<TARGET_FILE:voxenta_effects>
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:voxenta_effects> $<TARGET_FILE_DIR:voxenta>
 )
 
@@ -29,4 +28,4 @@ set_target_properties(voxenta
         LINK_OPTIONS "-Wl,--disable-new-dtags"
 )
 
-install(TARGETS ImGui voxenta_effects voxenta DESTINATION bin)
+install(TARGETS voxenta_effects voxenta DESTINATION bin)
