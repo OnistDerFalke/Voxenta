@@ -14,6 +14,7 @@ public:
     virtual bool run_ui() = 0;
     virtual cv::Mat run(cv::Mat image) = 0;
 
+protected:
     static void convert_to_rgb(cv::Mat* img);
 };
 
