@@ -4,32 +4,43 @@ Voxenta is a basic image processing UI tool made with ImGui, OpenGL and OpenCV w
 Application was tested on Linux but it should also work after building it for Microsoft Windows environment. 
 
 ## Requirements
-Commands for Fedora Linux
 
-OpenCV:
-**$** sudo dnf install opencv opencv-devel
+### Fedora Linux
 
-OpenGL:
-**$** sudo dnf install libglfw3-dev glfw-devel glew-devel SDL2-devel SDL2_image-devel glm-devel freetype-devel freeglut glibc-devel
+```bash
+glfw glfw-devel glew glew-devel opencv opencv-devel dbus dbus-devel xdg-desktop-portal
+```
 
-## Ready to use
-Voxenta already contains some examples that you can study to understand how to add new effects. It works as it is shown below:
+### Arch Linux
 
-![Screenshot_20240403_235244](https://github.com/OnistDerFalke/Voxenta/assets/75864407/28591582-4f19-4e11-b5c9-0dd82db66c33)
-
-## How does it work?
-You can load an image file that is supported by OpenCV. It is shown in left image window. Then choose the effect and it's numeric properties. It will be automatically applied to the image and shown in the right window. 
-Then you can save it using *File->Save* option from menu. Use image file extension supported by OpenCV.
-
-![image](https://github.com/OnistDerFalke/Voxenta/assets/75864407/3d039871-3b82-4005-9a10-a964bb409278)
+```bash
+glfw glew opencv vtk hdf dbus xdg-desktop-portal 
+```
 
 ## Adding new effects
-To add an effect you have to:
-1. Update the number of effects in *properties_window.h -> features*.
-2. Add the feature name to the vector in properties_window.cpp constructor.
-3. Add UI method to processing UI and add it's pointer to the functions vector in constructor.
-4. Add processing method to processing_methods and add it's pointer to the functions vector in constructor.
-5. Remember to save UI state and set your default values as it is done in examples.
+Voxenta already contains some class examples that you can study to understand how to add new effects in *source/voxenta_effects/src/effects* directory.
+
+1. Prepare the effect class (need to inherit from *effect* class, study example effects).
+2. Put it into *source/voxenta_effects/src/effects* directory.
+3. Use **Effects -> Reload effects** button or **CTRL+R** shortcut to reload. It works in runtime.
+4. If your effect was correctly prepared and has no errors, it should appear in dropdown options list.
+
+![image](https://github.com/OnistDerFalke/Voxenta/assets/75864407/33c99892-860f-42ad-8311-7f40bbebdbbc)
+
+
+## How does it work?
+
+### Basic processing
+You can load an image file that is supported by OpenCV with **File -> Load (CTRL+O)**. It will be shown in left image window. Then choose the effect from dropdown and set it's properties. It will be automatically applied to the image and shown in the right window. Then you can save it using **File->Save (CTRL+S)** option from menu. Use image file extension supported by OpenCV.
+
+### Effects chaining
+You can apply more than one effect. Just use **Effects -> Apply (CTRL+A)** shortcut to create a new chain element. Now processed image will appear on left window. You can undo this operation with **Effect -> Undo (CTRL+Z)**. The saved image is one that is visible on **right screen** so remember not to apply the last effect.
+
+### Runtime effects modification
+Now you can modify your effect file and use **Effects -> Reload effects (CTRL+R)** to reload changes in runtime. It grants fast and usefull tool to experiment with effects with no need to rebuild the project.
+
+
+![image](https://github.com/OnistDerFalke/Voxenta/assets/75864407/291ce29c-0b6b-4e7e-ace1-4752c7ba1d7b)
 
 ## License
 This application is provided under the terms of the **MIT License**, which means you have the right to copy, modify, and adapt our source code to your needs without obtaining my permission. 
