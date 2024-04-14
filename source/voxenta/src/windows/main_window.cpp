@@ -133,8 +133,15 @@ main_window::main_window() {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
+    //Creating ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+
+    //Creating NodeEditor context
+    ax::NodeEditor::Config config;
+    config.SettingsFile = "node_conf.json";
+    m_context = ax::NodeEditor::CreateEditor(&config);
+
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
@@ -148,7 +155,7 @@ main_window::main_window() {
     //Creating sub-windows in main window
     auto inputWindow = input_img_window(get_window_size(window));
     auto outputWindow = output_img_window(get_window_size(window));
-    auto propertiesWindow = properties_window(get_window_size(window));
+    auto propertiesWindow = properties_window(get_window_size(window), m_context);
 
     //Main loop
     while (!glfwWindowShouldClose(window))
@@ -191,6 +198,7 @@ main_window::main_window() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ax::NodeEditor::DestroyEditor(m_context);
     NFD::Quit();
     glfwDestroyWindow(window);
     glfwTerminate();

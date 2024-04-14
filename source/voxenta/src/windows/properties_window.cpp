@@ -9,10 +9,11 @@
 
 #include <nfd.hpp>
 
-properties_window::properties_window(ImVec2 mws)
+properties_window::properties_window(ImVec2 mws, ax::NodeEditor::EditorContext* m_context)
 {
     this->mws = mws;
 
+    this->m_context = m_context;
     this->current_effect_idx = 0;
 
     this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
@@ -24,12 +25,11 @@ properties_window::properties_window(ImVec2 mws)
 
 /* Shows the properties window and it's context */
 void properties_window::show() {
-    const effect_list_t& effects = effect_manager::effects();
-    just_uploaded = false; //image was loaded event
-    just_updated = false; //image changed (effect changed or was modified) event
+    just_uploaded = false; //Image was loaded event
+    just_updated = false; //Image changed (effect changed or was modified) event
 
     //Setting new position and size
-    auto border = std::min(mws.x, mws.y) * 0.01f;
+    auto border = mws.x * 0.005f;
     auto input_window_pos = ImVec2(border, mws.y*2/3);
     auto input_window_size = ImVec2(mws.x-2*border, (mws.y-3*border)*1/3);
     ImGui::SetNextWindowPos(input_window_pos);
@@ -43,89 +43,20 @@ void properties_window::show() {
     //Handle shortcuts events
     handle_shortcuts();
 
-    //Main menu, focused windows preparation
-    ImGui::BeginMenuBar();
-    if (ImGui::BeginMenu("File")) {
-        if (ImGui::MenuItem("Load", "Ctrl+O"))
-            file_load();
-        if (ImGui::MenuItem("Save", "Ctrl+S"))
-            file_save();
-        ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Effects")) {
-        if (ImGui::MenuItem("Apply", "Ctrl+A"))
-            apply_effect();
-        if (ImGui::MenuItem("Undo", "Ctrl+Z"))
-            undo_effect();
-#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-        if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
-            reload_effects();
-#endif
-        ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("About")) {
-        if (ImGui::MenuItem("About Program")) {
-            m_about_dialog_open = true;
-        }
-        ImGui::EndMenu();
-    }
-    ImGui::EndMenuBar();
+    //Sizes for context children
+    auto node_editor_size = ImVec2(0.75f*input_window_size.x, 0.0f);
+    auto node_explorer_size = ImVec2(input_window_size.x - 3.0f*input_window_pos.x - 0.75f*input_window_size.x, 0);
 
-    //Shows about-window if it was opened in from menu
-    about.show(&m_about_dialog_open, mws);
+    //Show window context
+    show_menu_bar();
+    show_node_editor(node_editor_size);
+    ImGui::SameLine(input_window_pos.x + node_editor_size.x, input_window_pos.x);
+    show_node_explorer(node_explorer_size);
 
-    //Effect combo
-    ImGui::BeginChild("effect_choice",
-                      ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
-    if (ImGui::BeginCombo("##effect_combo", effects[current_effect_idx].get().get_name())) {
-        for (int n = 0; n < effects.size(); n++) {
-            const bool is_selected = (current_effect_idx == n);
-            if (ImGui::Selectable(effects[n].get().get_name(), is_selected)) {
-                just_updated = true;
-                current_effect_idx = n;
-            }
-
-            // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-            if (is_selected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    ImGui::EndChild();
-    ImGui::Dummy(ImVec2(0, 2));
-
-    //Properties of effect
-    ImGui::BeginChild("properties",
-                      ImVec2((input_window_size.x)/2.0f-5.0f/4.0f * ImGui::GetStyle().ItemSpacing.x,
-                                             input_window_size.y-80), true);
-    ImGui::Text("Effect properties:");
-    ImGui::Dummy(ImVec2(0, 5));
-
-    //Getting image effect properties data set in UI
-    just_updated = just_updated || effects[current_effect_idx].get().run_ui();
-    if(!base_image.empty() && (just_updated || modified_image.empty())) {
-        modified_image = effects[this->current_effect_idx].get().run(base_image);
-    }
-
-    ImGui::EndChild();
-    ImGui::SameLine();
-
-    //Showing description in right properties window child
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-    ImGui::BeginChild("description",
-                      ImVec2((input_window_size.x)/2.0f - 3.5f/2.0f * ImGui::GetStyle().ItemSpacing.x,
-                             input_window_size.y-80), true);
-
-    ImGui::Text("Description:");
-    ImGui::Dummy(ImVec2(0, 5));
-    if(base_image.empty())
-        ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
-    else
-        ImGui::TextWrapped("%s", effects[this->current_effect_idx].get().get_description());
-    ImGui::EndChild();
-    ImGui::PopStyleColor();
     ImGui::End();
 }
+
+
 
 /* Updates the window size */
 void properties_window::set_mws(ImVec2 size) {
@@ -142,6 +73,8 @@ cv::Mat properties_window::get_modified_image() {
     return modified_image;
 }
 
+
+
 /* Loads available effects*/
 void properties_window::reload_effects() {
     current_effect_idx = std::clamp(this->current_effect_idx,
@@ -150,6 +83,7 @@ void properties_window::reload_effects() {
     this->just_updated = true;
 }
 
+/* Applies effect to the image */
 void properties_window::apply_effect() {
     history.push(base_image.clone());
     base_image = modified_image.clone();
@@ -157,6 +91,7 @@ void properties_window::apply_effect() {
     just_uploaded = true;
 }
 
+/* Undo latest effect of the image */
 void properties_window::undo_effect() {
     if(!history.empty()) {
         base_image = history.top().clone();
@@ -164,16 +99,6 @@ void properties_window::undo_effect() {
         just_updated = true;
         just_uploaded = true;
     }
-}
-
-/* Checks if event was started */
-bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
-    if(!ImGui::GetIO().KeyCtrl) {
-        return false;
-    }
-    if(!ImGui::IsKeyPressed(shortcut_keys[shortcut]))
-        shortcut_active[shortcut] = false;
-    return ImGui::IsKeyPressed(shortcut_keys[shortcut]);
 }
 
 /* Handles loading the image */
@@ -238,6 +163,18 @@ void properties_window::file_save() {
     }
 }
 
+
+
+/* Checks if event was started */
+bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
+    if(!ImGui::GetIO().KeyCtrl) {
+        return false;
+    }
+    if(!ImGui::IsKeyPressed(shortcut_keys[shortcut]))
+        shortcut_active[shortcut] = false;
+    return ImGui::IsKeyPressed(shortcut_keys[shortcut]);
+}
+
 /* Handles keyboard hotkeys/shortcuts */
 void properties_window::handle_shortcuts() {
     for (int i = 0; i < Shortcuts::NUM_SHORTCUTS; ++i) {
@@ -248,6 +185,7 @@ void properties_window::handle_shortcuts() {
     }
 }
 
+/* Sets shortcuts methods pointer and keys for all shortcuts */
 void properties_window::set_shortcuts() {
     this->shortcut_methods.resize(Shortcuts::NUM_SHORTCUTS);
     this->shortcut_keys.resize(Shortcuts::NUM_SHORTCUTS);
@@ -267,4 +205,92 @@ void properties_window::set_shortcuts() {
 #endif
     this->shortcut_keys[Shortcuts::APPLY_EFFECT] = ImGui::GetKeyIndex(ImGuiKey_A);
     this->shortcut_keys[Shortcuts::UNDO_EFFECT] =  ImGui::GetKeyIndex(ImGuiKey_Z);
+}
+
+
+
+/* Shows menu bar on the top of properties context */
+void properties_window::show_menu_bar() {
+//Main menu, focused windows preparation
+    ImGui::BeginMenuBar();
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Load", "Ctrl+O"))
+            file_load();
+        if (ImGui::MenuItem("Save", "Ctrl+S"))
+            file_save();
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Effects")) {
+        if (ImGui::MenuItem("Apply", "Ctrl+A"))
+            apply_effect();
+        if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+            undo_effect();
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
+        if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
+            reload_effects();
+#endif
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("About")) {
+        if (ImGui::MenuItem("About Program")) {
+            m_about_dialog_open = true;
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMenuBar();
+
+    about.show(&m_about_dialog_open, mws);
+}
+
+/* Shows node editor as a children of properties context */
+void properties_window::show_node_editor(ImVec2 size) {
+    ax::NodeEditor::SetCurrentEditor(m_context);
+    ax::NodeEditor::Begin("Node editor", size);
+    int uniqueId = 1;
+    // Start drawing nodes.
+    ax::NodeEditor::BeginNode(uniqueId++);
+    ImGui::Text("Node A");
+    ax::NodeEditor::BeginPin(uniqueId++,  ax::NodeEditor::PinKind::Input);
+    ImGui::Text("-> In");
+    ax::NodeEditor::EndPin();
+    ImGui::SameLine();
+    ax::NodeEditor::BeginPin(uniqueId++,  ax::NodeEditor::PinKind::Output);
+    ImGui::Text("Out ->");
+    ax::NodeEditor::EndPin();
+    ax::NodeEditor::EndNode();
+    ImGui::SameLine();
+    ImGui::Text("Description:");
+    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
+    ax::NodeEditor::End();
+    ax::NodeEditor::SetCurrentEditor(nullptr);
+}
+
+/* Shows node explorer as a children of properties context */
+void properties_window::show_node_explorer(ImVec2 size) {
+    const effect_list_t& effects = effect_manager::effects();
+
+    ImGui::BeginChild("properties", size, true);
+    if (ImGui::BeginCombo("##effect_combo", effects[current_effect_idx].get().get_name())) {
+        for (int n = 0; n < effects.size(); n++) {
+            const bool is_selected = (current_effect_idx == n);
+            if (ImGui::Selectable(effects[n].get().get_name(), is_selected)) {
+                just_updated = true;
+                current_effect_idx = n;
+            }
+
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::Text("Effect properties:");
+    ImGui::Dummy(ImVec2(0, 5));
+
+    just_updated = just_updated || effects[current_effect_idx].get().run_ui();
+    if(!base_image.empty() && (just_updated || modified_image.empty())) {
+        modified_image = effects[this->current_effect_idx].get().run(base_image);
+    }
+
+    ImGui::EndChild();
 }

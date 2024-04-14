@@ -9,6 +9,13 @@ CPMAddPackage(
         DOWNLOAD_ONLY TRUE
 )
 
+CPMAddPackage(
+        NAME imgui-node-editor
+        URL https://github.com/thedmd/imgui-node-editor/archive/e78e447900909a051817a760efe13fe83e6e1afc.tar.gz
+        URL_HASH SHA256=a9024655ff31e14f47b8758c01b07cfeb45f317ceead145a207d90839331537c
+        DOWNLOAD_ONLY TRUE
+)
+
 set(ImGui_SOURCE_FILES
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -16,10 +23,20 @@ set(ImGui_SOURCE_FILES
         ${imgui_SOURCE_DIR}/imgui_widgets.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+
+        ${imgui-node-editor_SOURCE_DIR}/crude_json.cpp
+        ${imgui-node-editor_SOURCE_DIR}/imgui_canvas.cpp
+        ${imgui-node-editor_SOURCE_DIR}/imgui_node_editor.cpp
+        ${imgui-node-editor_SOURCE_DIR}/imgui_node_editor_api.cpp
 )
 
 add_library(ImGui STATIC ${ImGui_SOURCE_FILES})
 
-target_include_directories(ImGui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+target_include_directories(ImGui PUBLIC
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
+
+        ${imgui-node-editor_SOURCE_DIR}
+)
 
 target_link_libraries(ImGui PRIVATE glfw)

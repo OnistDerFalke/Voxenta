@@ -12,7 +12,7 @@ output_img_window::output_img_window(ImVec2 mws) {
 void output_img_window::show(cv::Mat image, bool just_uploaded) {
 
     //Setting new position and size
-    auto border = std::min(mws.x, mws.y) * 0.01f;
+    auto border = mws.x * 0.005f;
     auto input_window_pos = ImVec2((mws.x + border)/2,border);
     auto input_window_size = ImVec2((mws.x-3*border)/2,(mws.y-(3*border))*2/3);
     ImGui::SetNextWindowPos(input_window_pos);
