@@ -4,8 +4,8 @@ include(FetchContent)
 
 CPMAddPackage(
         NAME imgui
-        GITHUB_REPOSITORY ocornut/imgui
-        GIT_TAG 4f9ba19e520bea478f5cb654d37ef45e6404bd52
+        URL https://github.com/ocornut/imgui/archive/4f9ba19e520bea478f5cb654d37ef45e6404bd52.tar.gz
+        URL_HASH SHA256=b165ecafcb917a9fd182cba81a67c511727cd71c041b1e05e26851e04729e720
         DOWNLOAD_ONLY TRUE
 )
 
