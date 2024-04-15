@@ -2,14 +2,12 @@ project(ImGui)
 
 include(FetchContent)
 
-FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+CPMAddPackage(
+        NAME imgui
+        GITHUB_REPOSITORY ocornut/imgui
         GIT_TAG 4f9ba19e520bea478f5cb654d37ef45e6404bd52
+        DOWNLOAD_ONLY TRUE
 )
-if (NOT imgui_POPULATED)
-    FetchContent_Populate(imgui)
-endif ()
 
 set(ImGui_SOURCE_FILES
         ${imgui_SOURCE_DIR}/imgui.cpp
