@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 option(VOXENTA_USE_GTK_FILE_PICKER "Use GTK file picker instead of xdg-desktop-portals (Linux only)" OFF)
+option(VOXENTA_EFFECTS_HOT_RELOAD "Enable hot-reloading effects via dlopen (Linux only)" ON)
 
 set(CPM_DOWNLOAD_VERSION 0.39.0)
 set(CPM_HASH_SUM "66639bcac9dd2907b2918de466783554c1334446b9874e90d38e3778d404c2ef")
@@ -26,7 +27,10 @@ include(${CPM_DOWNLOAD_LOCATION})
 project(voxenta)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_INSTALL_RPATH "${LIB_INSTALL_PATH}:$ORIGIN")
+
+if (VOXENTA_EFFECTS_HOT_RELOAD)
+    set(CMAKE_INSTALL_RPATH "${LIB_INSTALL_PATH}:$ORIGIN")
+endif()
 
 find_package(OpenCV REQUIRED)
 find_package(glfw3 REQUIRED)
@@ -39,17 +43,23 @@ add_subdirectory(external/nativefiledialog-extended)
 add_subdirectory(source/voxenta_effects)
 add_subdirectory(source/voxenta)
 
-add_custom_target(voxenta_copy_deps
-        DEPENDS $<TARGET_FILE:voxenta_effects>
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:voxenta_effects> $<TARGET_FILE_DIR:voxenta>
-)
+if (VOXENTA_EFFECTS_HOT_RELOAD)
+    add_custom_target(voxenta_copy_deps
+            DEPENDS $<TARGET_FILE:voxenta_effects>
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:voxenta_effects> $<TARGET_FILE_DIR:voxenta>
+    )
 
-add_dependencies(voxenta voxenta_copy_deps)
+    add_dependencies(voxenta voxenta_copy_deps)
 
-set_target_properties(voxenta
-        PROPERTIES
-        BUILD_WITH_INSTALL_RPATH true
-        LINK_OPTIONS "-Wl,--disable-new-dtags"
-)
+    set_target_properties(voxenta
+            PROPERTIES
+            BUILD_WITH_INSTALL_RPATH true
+            LINK_OPTIONS "-Wl,--disable-new-dtags"
+    )
 
-install(TARGETS voxenta_effects voxenta DESTINATION bin)
+    set(INSTALL_TARGETS voxenta_effects voxenta)
+else()
+    set(INSTALL_TARGETS voxenta)
+endif()
+
+install(TARGETS ${INSTALL_TARGETS} DESTINATION bin)

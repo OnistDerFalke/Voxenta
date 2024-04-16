@@ -18,4 +18,8 @@ protected:
     static void convert_to_rgb(cv::Mat* img);
 };
 
+#if !defined(VOXENTA_EFFECTS_HOT_RELOAD)
+extern std::vector<effect*> g_effects;
+#endif
+
 #endif

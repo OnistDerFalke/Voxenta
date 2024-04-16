@@ -3,16 +3,16 @@
 
 #include "voxenta/effects/effect.h"
 
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
 #include <dlfcn.h>
+#endif
+
 #include <nfd.hpp>
 
 properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
 
-    this->effects_lib = nullptr;
-    this->effects = nullptr;
-    this->current_effect_idx = 0;
     this->load_effects();
     this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
     this->last_load_path = std::filesystem::current_path();
@@ -55,8 +55,10 @@ void properties_window::show() {
             apply_effect();
         if (ImGui::MenuItem("Undo", "Ctrl+Z"))
             undo_effect();
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
         if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
             load_effects();
+#endif
         ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("About")) {
@@ -140,6 +142,12 @@ cv::Mat properties_window::get_modified_image() {
 
 /* Loads available effects*/
 void properties_window::load_effects() {
+    this->effects = nullptr;
+    this->current_effect_idx = 0;
+
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
+    this->effects_lib = nullptr;
+
     if (this->effects_lib != nullptr) {
         dlclose(this->effects_lib);
     }
@@ -149,6 +157,9 @@ void properties_window::load_effects() {
     this->current_effect_idx = std::clamp(this->current_effect_idx, 0ul, this->effects->size() - 1);
 
     this->just_updated = true;
+#else
+    this->effects = &g_effects;
+#endif
 }
 
 void properties_window::apply_effect() {
@@ -255,13 +266,17 @@ void properties_window::set_shortcuts() {
 
     this->shortcut_methods[Shortcuts::LOAD] = &properties_window::file_load;
     this->shortcut_methods[Shortcuts::SAVE] = &properties_window::file_save;
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
     this->shortcut_methods[Shortcuts::RELOAD_EFFECTS] = &properties_window::load_effects;
+#endif
     this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::apply_effect;
     this->shortcut_methods[Shortcuts::UNDO_EFFECT] = &properties_window::undo_effect;
 
     this->shortcut_keys[Shortcuts::LOAD] =  ImGui::GetKeyIndex(ImGuiKey_O);
     this->shortcut_keys[Shortcuts::SAVE] = ImGui::GetKeyIndex(ImGuiKey_S);
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
     this->shortcut_keys[Shortcuts::RELOAD_EFFECTS] =  ImGui::GetKeyIndex(ImGuiKey_R);
+#endif
     this->shortcut_keys[Shortcuts::APPLY_EFFECT] = ImGui::GetKeyIndex(ImGuiKey_A);
     this->shortcut_keys[Shortcuts::UNDO_EFFECT] =  ImGui::GetKeyIndex(ImGuiKey_Z);
 }

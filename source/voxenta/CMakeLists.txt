@@ -27,4 +27,9 @@ target_link_libraries(voxenta PRIVATE
         nfd
 )
 
-set_property(TARGET voxenta PROPERTY ENABLE_EXPORTS ON)
+if (VOXENTA_EFFECTS_HOT_RELOAD)
+    target_compile_definitions(voxenta PRIVATE VOXENTA_EFFECTS_HOT_RELOAD)
+    set_property(TARGET voxenta PROPERTY ENABLE_EXPORTS ON)
+else()
+    target_link_libraries(voxenta PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,voxenta_effects>)
+endif()

@@ -24,7 +24,9 @@ private:
     enum Shortcuts {
         LOAD,
         SAVE,
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
         RELOAD_EFFECTS,
+#endif
         APPLY_EFFECT,
         UNDO_EFFECT,
         NUM_SHORTCUTS
@@ -37,7 +39,9 @@ private:
     cv::Mat base_image;
     cv::Mat modified_image;
     std::stack<cv::Mat> history;
+#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
     void *effects_lib;
+#endif
     std::vector<effect*>* effects;
     size_t current_effect_idx;
     std::vector<bool> shortcut_active;
