@@ -3,6 +3,7 @@
 
 #include "voxenta/windows/about_window.h"
 #include "voxenta/effects/effect.h"
+#include "voxenta/node_editor/node_editor.h"
 
 #include <filesystem>
 
@@ -39,6 +40,7 @@ private:
     ax::NodeEditor::EditorContext* m_context;
     bool m_about_dialog_open{};
     about_window about;
+    node_editor editor{};
     std::filesystem::path last_load_path;
     std::filesystem::path last_save_path;
     cv::Mat base_image;

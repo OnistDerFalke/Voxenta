@@ -14,6 +14,8 @@ properties_window::properties_window(ImVec2 mws, ax::NodeEditor::EditorContext* 
     this->mws = mws;
 
     this->m_context = m_context;
+    this->editor = node_editor(this->m_context);
+
     this->current_effect_idx = 0;
 
     this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
@@ -244,26 +246,7 @@ void properties_window::show_menu_bar() {
 
 /* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
-    ax::NodeEditor::SetCurrentEditor(m_context);
-    ax::NodeEditor::Begin("Node editor", size);
-    int uniqueId = 1;
-    // Start drawing nodes.
-    ax::NodeEditor::BeginNode(uniqueId++);
-    ImGui::Text("Node A");
-    ax::NodeEditor::BeginPin(uniqueId++,  ax::NodeEditor::PinKind::Input);
-    ImGui::Text("-> In");
-    ax::NodeEditor::EndPin();
-    ImGui::SameLine();
-    ax::NodeEditor::BeginPin(uniqueId++,  ax::NodeEditor::PinKind::Output);
-    ImGui::Text("Out ->");
-    ax::NodeEditor::EndPin();
-    ax::NodeEditor::EndNode();
-    ImGui::SameLine();
-    ImGui::Text("Description:");
-    ImGui::Dummy(ImVec2(0, 5));
-    ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
-    ax::NodeEditor::End();
-    ax::NodeEditor::SetCurrentEditor(nullptr);
+    editor.show(size);
 }
 
 /* Shows node explorer as a children of properties context */
