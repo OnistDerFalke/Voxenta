@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+option(VOXENTA_USE_GTK_FILE_PICKER "Use GTK file picker instead of xdg-desktop-portals (Linux only)" OFF)
+
 set(CPM_DOWNLOAD_VERSION 0.39.0)
 set(CPM_HASH_SUM "66639bcac9dd2907b2918de466783554c1334446b9874e90d38e3778d404c2ef")
 
