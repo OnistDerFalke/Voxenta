@@ -6,17 +6,16 @@
 #include "voxenta/node_editor/node_editor.h"
 
 #include <filesystem>
+#include <stack>
 
 #include <imgui.h>
-#include <imgui_node_editor.h>
+#include <imnodes.h>
 
 #include <opencv2/opencv.hpp>
 
-#include <stack>
-
 class properties_window {
 public:
-    properties_window(ImVec2 mws, ax::NodeEditor::EditorContext* m_context);
+    properties_window(ImVec2 mws);
     void show();
 
     void set_mws(ImVec2 size);
@@ -37,7 +36,6 @@ private:
         NUM_SHORTCUTS
     };
     ImVec2 mws;
-    ax::NodeEditor::EditorContext* m_context;
     bool m_about_dialog_open{};
     about_window about;
     node_editor editor{};

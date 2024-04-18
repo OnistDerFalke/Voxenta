@@ -24,6 +24,7 @@ target_link_libraries(voxenta PRIVATE
         glfw
         ${OPENGL_LIBRARIES}
         ImGui
+        imnodes
         nfd
 )
 

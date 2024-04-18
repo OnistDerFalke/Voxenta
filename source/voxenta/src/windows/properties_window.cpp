@@ -9,12 +9,11 @@
 
 #include <nfd.hpp>
 
-properties_window::properties_window(ImVec2 mws, ax::NodeEditor::EditorContext* m_context)
+properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
 
-    this->m_context = m_context;
-    this->editor = node_editor(this->m_context);
+    this->editor = node_editor();
 
     this->current_effect_idx = 0;
 
@@ -233,6 +232,22 @@ void properties_window::show_menu_bar() {
 #endif
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("Minimap"))
+    {
+        const char* names[] = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
+        int locations[] = {ImNodesMiniMapLocation_TopLeft,
+                           ImNodesMiniMapLocation_TopRight,
+                           ImNodesMiniMapLocation_BottomLeft,
+                           ImNodesMiniMapLocation_BottomRight};
+
+        for (int i = 0; i < 4; i++)
+        {
+            bool selected = editor.get_minimap_location() == locations[i];
+            if (ImGui::MenuItem(names[i], nullptr, &selected))
+                editor.set_minimap_location(locations[i]);
+        }
+        ImGui::EndMenu();
+    }
     if (ImGui::BeginMenu("About")) {
         if (ImGui::MenuItem("About Program")) {
             m_about_dialog_open = true;
@@ -246,7 +261,9 @@ void properties_window::show_menu_bar() {
 
 /* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
+    ImGui::BeginChild("editor", size, true);
     editor.show(size);
+    ImGui::EndChild();
 }
 
 /* Shows node explorer as a children of properties context */

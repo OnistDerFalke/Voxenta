@@ -13,6 +13,7 @@ target_include_directories(voxenta_effects PUBLIC
 
 target_include_directories(voxenta_effects PRIVATE
         $<TARGET_PROPERTY:ImGui,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:imnodes,INTERFACE_INCLUDE_DIRECTORIES>
         ${OpenCV_INCLUDE_DIRS}
 )
 

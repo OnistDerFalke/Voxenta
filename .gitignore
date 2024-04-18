@@ -166,3 +166,5 @@ _deps
 ### Ninja template
 .ninja_deps
 .ninja_log
+
+.idea/
