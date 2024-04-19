@@ -262,7 +262,7 @@ void properties_window::show_menu_bar() {
 /* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
     ImGui::BeginChild("editor", size, true);
-    editor.show(size);
+    editor.show();
     ImGui::EndChild();
 }
 
