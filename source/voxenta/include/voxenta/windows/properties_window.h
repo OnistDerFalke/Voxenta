@@ -39,10 +39,6 @@ private:
     cv::Mat base_image;
     cv::Mat modified_image;
     std::stack<cv::Mat> history;
-#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-    void *effects_lib;
-#endif
-    std::vector<effect*>* effects;
     size_t current_effect_idx;
     std::vector<bool> shortcut_active;
     std::vector<void (properties_window::*) ()> shortcut_methods;
@@ -52,7 +48,7 @@ private:
     bool shortcut_event(Shortcuts shortcut);
     void file_load();
     void file_save();
-    void load_effects();
+    void reload_effects();
     void apply_effect();
     void undo_effect();
     void handle_shortcuts();

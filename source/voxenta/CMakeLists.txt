@@ -1,4 +1,5 @@
 add_executable(voxenta
+        src/effect_manager.cpp
         src/main.cpp
 
         src/windows/about_window.cpp

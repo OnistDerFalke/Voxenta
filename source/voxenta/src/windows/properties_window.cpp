@@ -1,7 +1,7 @@
 #include "voxenta/windows/properties_window.h"
 #include "voxenta/windows/about_window.h"
 
-#include "voxenta/effects/effect.h"
+#include "voxenta/effect_manager.h"
 
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
 #include <dlfcn.h>
@@ -13,7 +13,8 @@ properties_window::properties_window(ImVec2 mws)
 {
     this->mws = mws;
 
-    this->load_effects();
+    this->current_effect_idx = 0;
+
     this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
     this->last_load_path = std::filesystem::current_path();
     this->last_save_path = std::filesystem::current_path();
@@ -23,6 +24,7 @@ properties_window::properties_window(ImVec2 mws)
 
 /* Shows the properties window and it's context */
 void properties_window::show() {
+    const effect_list_t& effects = effect_manager::effects();
     just_uploaded = false; //image was loaded event
     just_updated = false; //image changed (effect changed or was modified) event
 
@@ -57,7 +59,7 @@ void properties_window::show() {
             undo_effect();
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
         if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
-            load_effects();
+            reload_effects();
 #endif
         ImGui::EndMenu();
     }
@@ -75,10 +77,10 @@ void properties_window::show() {
     //Effect combo
     ImGui::BeginChild("effect_choice",
                       ImVec2((input_window_size.x) / 2.0f - 5.0f / 4.0f * ImGui::GetStyle().ItemSpacing.x, 20));
-    if (ImGui::BeginCombo("##effect_combo", effects->at(current_effect_idx)->get_name())) {
-        for (int n = 0; n < effects->size(); n++) {
+    if (ImGui::BeginCombo("##effect_combo", effects[current_effect_idx].get().get_name())) {
+        for (int n = 0; n < effects.size(); n++) {
             const bool is_selected = (current_effect_idx == n);
-            if (ImGui::Selectable(effects->at(n)->get_name(), is_selected)) {
+            if (ImGui::Selectable(effects[n].get().get_name(), is_selected)) {
                 just_updated = true;
                 current_effect_idx = n;
             }
@@ -100,9 +102,9 @@ void properties_window::show() {
     ImGui::Dummy(ImVec2(0, 5));
 
     //Getting image effect properties data set in UI
-    just_updated = just_updated || effects->at(current_effect_idx)->run_ui();
+    just_updated = just_updated || effects[current_effect_idx].get().run_ui();
     if(!base_image.empty() && (just_updated || modified_image.empty())) {
-        modified_image = effects->at(this->current_effect_idx)->run(base_image);
+        modified_image = effects[this->current_effect_idx].get().run(base_image);
     }
 
     ImGui::EndChild();
@@ -119,7 +121,7 @@ void properties_window::show() {
     if(base_image.empty())
         ImGui::TextWrapped("%s", "Load the image first to apply any effects.");
     else
-        ImGui::TextWrapped("%s", effects->at(this->current_effect_idx)->get_description());
+        ImGui::TextWrapped("%s", effects[this->current_effect_idx].get().get_description());
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::End();
@@ -141,25 +143,9 @@ cv::Mat properties_window::get_modified_image() {
 }
 
 /* Loads available effects*/
-void properties_window::load_effects() {
-    this->effects = nullptr;
-    this->current_effect_idx = 0;
-
-#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-    this->effects_lib = nullptr;
-
-    if (this->effects_lib != nullptr) {
-        dlclose(this->effects_lib);
-    }
-
-    this->effects_lib = dlopen("./libvoxenta_effects.so", RTLD_LAZY | RTLD_DEEPBIND);
-    this->effects = static_cast<std::vector<effect*>*>(dlsym(effects_lib, "g_effects"));
-    this->current_effect_idx = std::clamp(this->current_effect_idx, 0ul, this->effects->size() - 1);
-
+void properties_window::reload_effects() {
+    current_effect_idx = std::clamp(this->current_effect_idx, 0ul, effect_manager::effects().size() - 1);
     this->just_updated = true;
-#else
-    this->effects = &g_effects;
-#endif
 }
 
 void properties_window::apply_effect() {
@@ -267,7 +253,7 @@ void properties_window::set_shortcuts() {
     this->shortcut_methods[Shortcuts::LOAD] = &properties_window::file_load;
     this->shortcut_methods[Shortcuts::SAVE] = &properties_window::file_save;
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-    this->shortcut_methods[Shortcuts::RELOAD_EFFECTS] = &properties_window::load_effects;
+    this->shortcut_methods[Shortcuts::RELOAD_EFFECTS] = &properties_window::reload_effects;
 #endif
     this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::apply_effect;
     this->shortcut_methods[Shortcuts::UNDO_EFFECT] = &properties_window::undo_effect;

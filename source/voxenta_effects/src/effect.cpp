@@ -3,14 +3,14 @@
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
 extern "C" {
     __attribute__((visibility("default")))
-    std::vector<effect*> g_effects;
+    effect_list_t g_effects;
 }
 #else
-std::vector<effect*> g_effects;
+effect_list_t g_effects;
 #endif
 
 effect::effect() {
-    g_effects.emplace_back(this);
+    g_effects.emplace_back(*this);
 }
 
 void effect::convert_to_rgb(cv::Mat* img) {
