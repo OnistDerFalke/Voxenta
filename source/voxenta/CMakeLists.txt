@@ -16,14 +16,12 @@ target_include_directories(voxenta PRIVATE
         ${OpenCV_INCLUDE_DIRS}
         ${GLFW_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIRS}
-        ${GLEW_INCLUDE_DIRS}
 )
 
 target_link_libraries(voxenta PRIVATE
         ${OpenCV_LIBS}
         glfw
         ${OPENGL_LIBRARIES}
-        ${GLEW_LIBRARIES}
         ImGui
         nfd
 )
