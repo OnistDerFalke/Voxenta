@@ -32,8 +32,8 @@ if (VOXENTA_EFFECTS_HOT_RELOAD)
     set(CMAKE_INSTALL_RPATH "${LIB_INSTALL_PATH}:$ORIGIN")
 endif()
 
-find_package(OpenCV REQUIRED)
-find_package(glfw3 REQUIRED)
+find_package(OpenCV CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
