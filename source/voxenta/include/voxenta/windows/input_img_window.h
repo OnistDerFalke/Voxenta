@@ -2,7 +2,7 @@
 #define VOXENTA_INPUT_IMG_WINDOW_H
 
 #include <imgui.h>
-#include <opencv4/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 class input_img_window {
 public:

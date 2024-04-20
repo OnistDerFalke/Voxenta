@@ -2,7 +2,7 @@
 #define VOXENTA_OUTPUT_IMG_WINDOW_H
 
 #include <imgui.h>
-#include <opencv4/opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 class output_img_window {
 public:
