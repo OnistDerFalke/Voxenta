@@ -144,7 +144,9 @@ cv::Mat properties_window::get_modified_image() {
 
 /* Loads available effects*/
 void properties_window::reload_effects() {
-    current_effect_idx = std::clamp(this->current_effect_idx, 0ul, effect_manager::effects().size() - 1);
+    current_effect_idx = std::clamp(this->current_effect_idx,
+                                    static_cast<size_t>(0),
+                                    effect_manager::effects().size() - 1);
     this->just_updated = true;
 }
 
