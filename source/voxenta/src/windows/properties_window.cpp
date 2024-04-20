@@ -176,7 +176,7 @@ bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
 
 /* Handles loading the image */
 void properties_window::file_load() {
-    NFD::UniquePathN outPath;
+    NFD::UniquePathU8 outPath;
 
     //No need to differentiate between image formats
     constexpr nfdfilteritem_t filters[1] = {
@@ -187,7 +187,7 @@ void properties_window::file_load() {
             outPath,
             filters,
             IM_ARRAYSIZE(filters),
-            last_load_path.parent_path().c_str());
+            last_load_path.parent_path().generic_string().c_str());
 
     if (result == NFD_OKAY && outPath != nullptr) {
         just_uploaded = true;
@@ -211,7 +211,7 @@ void properties_window::file_load() {
 /* Handles saving the image */
 void properties_window::file_save() {
     if(!modified_image.empty()) {
-        NFD::UniquePathN outPath;
+        NFD::UniquePathU8 outPath;
 
         //Prefer lossless image formats
         constexpr nfdfilteritem_t filters[2] = {
@@ -223,7 +223,7 @@ void properties_window::file_save() {
                 outPath,
                 filters,
                 IM_ARRAYSIZE(filters),
-                last_save_path.parent_path().c_str(),
+                last_save_path.parent_path().generic_string().c_str(),
                 !is_directory(last_load_path) ?(last_load_path.stem().string() + "_out" + last_load_path.extension().string()).c_str(): nullptr);
 
         if (result == NFD_OKAY && outPath != nullptr) {
