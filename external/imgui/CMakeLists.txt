@@ -21,3 +21,5 @@ set(ImGui_SOURCE_FILES
 add_library(ImGui STATIC ${ImGui_SOURCE_FILES})
 
 target_include_directories(ImGui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+
+target_link_libraries(ImGui PRIVATE glfw)
