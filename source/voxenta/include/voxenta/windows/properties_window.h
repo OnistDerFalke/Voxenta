@@ -1,4 +1,4 @@
-#ifndef VOXENTA_PROPERTIES_WINDOW_H
+﻿#ifndef VOXENTA_PROPERTIES_WINDOW_H
 #define VOXENTA_PROPERTIES_WINDOW_H
 
 #include "voxenta/windows/about_window.h"
@@ -62,6 +62,10 @@ private:
     void show_menu_bar();
     void show_node_editor(ImVec2 size);
     void show_node_explorer(ImVec2 size);
+
+    bool node_editor_fullscreen{};
+    bool node_editor_fullscreen_prev_{};
+    void toggle_node_editor_fullscreen();
 };
 
 #endif

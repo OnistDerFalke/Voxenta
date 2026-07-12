@@ -1,4 +1,4 @@
-#include "voxenta/windows/properties_window.h"
+﻿#include "voxenta/windows/properties_window.h"
 #include "voxenta/windows/about_window.h"
 
 #include "voxenta/effect_manager.h"
@@ -29,30 +29,60 @@ void properties_window::show() {
     just_uploaded = false; //Image was loaded event
     just_updated = false; //Image changed (effect changed or was modified) event
 
+    // Toggle node editor fullscreen with F11
+    if (ImGui::IsKeyPressed(ImGuiKey_F11)) {
+        toggle_node_editor_fullscreen();
+    }
+
+    //To be sure that nothing will be drawn over fullscreen editor grid
+    //Also adds possibility not to block right click on fullscreen editor
+    if (node_editor_fullscreen && !node_editor_fullscreen_prev_) {
+        ImGui::SetWindowFocus(" Properties");
+    }
+    node_editor_fullscreen_prev_ = node_editor_fullscreen;
+
     //Setting new position and size
     auto border = mws.x * 0.005f;
-    auto input_window_pos = ImVec2(border, mws.y*2/3);
-    auto input_window_size = ImVec2(mws.x-2*border, (mws.y-3*border)*1/3);
+    ImVec2 input_window_pos;
+    ImVec2 input_window_size;
+
+    if (node_editor_fullscreen) {
+        // Cover the whole application window with node editor
+        input_window_pos = ImVec2(0.0f, 0.0f);
+        input_window_size = mws;
+    }
+    else {
+        input_window_pos = ImVec2(border, mws.y * 2 / 3);
+        input_window_size = ImVec2(mws.x - 2 * border, (mws.y - 3 * border) * 1 / 3);
+    }
+
     ImGui::SetNextWindowPos(input_window_pos);
     ImGui::SetNextWindowSize(input_window_size);
 
     //Context
     ImGui::Begin(" Properties", nullptr,
-                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar);
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar);
 
     //Handle shortcuts events
     handle_shortcuts();
 
-    //Sizes for context children
-    auto node_editor_size = ImVec2(0.75f*input_window_size.x, 0.0f);
-    auto node_explorer_size = ImVec2(input_window_size.x - 3.0f*input_window_pos.x - 0.75f*input_window_size.x, 0);
+    if (node_editor_fullscreen) {
+        // Node editor takes up the entire window
+        // explorer panel is hidden while fullscreen
+        show_node_editor(ImGui::GetContentRegionAvail());
+    }
+    else {
+        //Sizes for context children
+        auto node_editor_size = ImVec2(0.75f * ImGui::GetContentRegionAvail().x, 0.0f);
 
-    //Show window context
-    show_menu_bar();
-    show_node_editor(node_editor_size);
-    ImGui::SameLine(input_window_pos.x + node_editor_size.x, input_window_pos.x);
-    show_node_explorer(node_explorer_size);
+        //Show window context
+        show_menu_bar();
+        show_node_editor(node_editor_size);
+        ImGui::SameLine();
+        auto node_explorer_size = ImGui::GetContentRegionAvail();
+        show_node_explorer(node_explorer_size);
+    }
 
     ImGui::End();
 }
@@ -79,8 +109,8 @@ cv::Mat properties_window::get_modified_image() {
 /* Loads available effects*/
 void properties_window::reload_effects() {
     current_effect_idx = std::clamp(this->current_effect_idx,
-                                    static_cast<size_t>(0),
-                                    effect_manager::effects().size() - 1);
+        static_cast<size_t>(0),
+        effect_manager::effects().size() - 1);
     this->just_updated = true;
 }
 
@@ -112,10 +142,10 @@ void properties_window::file_load() {
     };
 
     nfdresult_t result = NFD::OpenDialog(
-            outPath,
-            filters,
-            IM_ARRAYSIZE(filters),
-            last_load_path.parent_path().generic_string().c_str());
+        outPath,
+        filters,
+        IM_ARRAYSIZE(filters),
+        last_load_path.parent_path().generic_string().c_str());
 
     if (result == NFD_OKAY && outPath != nullptr) {
         just_uploaded = true;
@@ -138,7 +168,7 @@ void properties_window::file_load() {
 
 /* Handles saving the image */
 void properties_window::file_save() {
-    if(!modified_image.empty()) {
+    if (!modified_image.empty()) {
         NFD::UniquePathU8 outPath;
 
         //Prefer lossless image formats
@@ -148,11 +178,11 @@ void properties_window::file_save() {
         };
 
         nfdresult_t result = NFD::SaveDialog(
-                outPath,
-                filters,
-                IM_ARRAYSIZE(filters),
-                last_save_path.parent_path().generic_string().c_str(),
-                !is_directory(last_load_path) ?(last_load_path.stem().string() + "_out" + last_load_path.extension().string()).c_str(): nullptr);
+            outPath,
+            filters,
+            IM_ARRAYSIZE(filters),
+            last_save_path.parent_path().generic_string().c_str(),
+            !is_directory(last_load_path) ? (last_load_path.stem().string() + "_out" + last_load_path.extension().string()).c_str() : nullptr);
 
         if (result == NFD_OKAY && outPath != nullptr) {
             cv::imwrite(outPath.get(), modified_image);
@@ -168,10 +198,10 @@ void properties_window::file_save() {
 
 /* Checks if event was started */
 bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
-    if(!ImGui::GetIO().KeyCtrl) {
+    if (!ImGui::GetIO().KeyCtrl) {
         return false;
     }
-    if(!ImGui::IsKeyPressed(shortcut_keys[shortcut]))
+    if (!ImGui::IsKeyPressed(shortcut_keys[shortcut]))
         shortcut_active[shortcut] = false;
     return ImGui::IsKeyPressed(shortcut_keys[shortcut]);
 }
@@ -199,20 +229,20 @@ void properties_window::set_shortcuts() {
     this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::apply_effect;
     this->shortcut_methods[Shortcuts::UNDO_EFFECT] = &properties_window::undo_effect;
 
-    this->shortcut_keys[Shortcuts::LOAD] =  ImGui::GetKeyIndex(ImGuiKey_O);
+    this->shortcut_keys[Shortcuts::LOAD] = ImGui::GetKeyIndex(ImGuiKey_O);
     this->shortcut_keys[Shortcuts::SAVE] = ImGui::GetKeyIndex(ImGuiKey_S);
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-    this->shortcut_keys[Shortcuts::RELOAD_EFFECTS] =  ImGui::GetKeyIndex(ImGuiKey_R);
+    this->shortcut_keys[Shortcuts::RELOAD_EFFECTS] = ImGui::GetKeyIndex(ImGuiKey_R);
 #endif
     this->shortcut_keys[Shortcuts::APPLY_EFFECT] = ImGui::GetKeyIndex(ImGuiKey_A);
-    this->shortcut_keys[Shortcuts::UNDO_EFFECT] =  ImGui::GetKeyIndex(ImGuiKey_Z);
+    this->shortcut_keys[Shortcuts::UNDO_EFFECT] = ImGui::GetKeyIndex(ImGuiKey_Z);
 }
 
 
 
 /* Shows menu bar on the top of properties context */
 void properties_window::show_menu_bar() {
-//Main menu, focused windows preparation
+    //Main menu, focused windows preparation
     ImGui::BeginMenuBar();
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load", "Ctrl+O"))
@@ -232,13 +262,18 @@ void properties_window::show_menu_bar() {
 #endif
         ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("View")) {
+        if (ImGui::MenuItem("Toggle node editor fullscreen", "F11", node_editor_fullscreen))
+            toggle_node_editor_fullscreen();
+        ImGui::EndMenu();
+    }
     if (ImGui::BeginMenu("Minimap"))
     {
-        const char* names[] = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"};
-        int locations[] = {ImNodesMiniMapLocation_TopLeft,
+        const char* names[] = { "Top Left", "Top Right", "Bottom Left", "Bottom Right" };
+        int locations[] = { ImNodesMiniMapLocation_TopLeft,
                            ImNodesMiniMapLocation_TopRight,
                            ImNodesMiniMapLocation_BottomLeft,
-                           ImNodesMiniMapLocation_BottomRight};
+                           ImNodesMiniMapLocation_BottomRight };
 
         for (int i = 0; i < 4; i++)
         {
@@ -262,8 +297,21 @@ void properties_window::show_menu_bar() {
 /* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
     ImGui::BeginChild("editor", size, true);
+
+    const ImVec2 child_screen_pos = ImGui::GetCursorScreenPos();
     editor.show();
+
+    ImGui::SetCursorScreenPos(ImVec2(child_screen_pos.x + 8.0f, child_screen_pos.y + 8.0f));
+    if (ImGui::Button(node_editor_fullscreen ? "Minimize (F11)" : "Fullscreen (F11)")) {
+        toggle_node_editor_fullscreen();
+    }
+
     ImGui::EndChild();
+}
+
+/* Toggles the node editor between its normal size and covering the whole application window */
+void properties_window::toggle_node_editor_fullscreen() {
+    node_editor_fullscreen = !node_editor_fullscreen;
 }
 
 /* Shows node explorer as a children of properties context */
@@ -288,7 +336,7 @@ void properties_window::show_node_explorer(ImVec2 size) {
     ImGui::Dummy(ImVec2(0, 5));
 
     just_updated = just_updated || effects[current_effect_idx].get().run_ui();
-    if(!base_image.empty() && (just_updated || modified_image.empty())) {
+    if (!base_image.empty() && (just_updated || modified_image.empty())) {
         modified_image = effects[this->current_effect_idx].get().run(base_image);
     }
 

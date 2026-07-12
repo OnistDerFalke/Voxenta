@@ -1,10 +1,13 @@
-#include "voxenta/node_editor/node_editor.h"
+﻿#include "voxenta/node_editor/node_editor.h"
 
 #include "voxenta/effect_manager.h"
 
 node_editor::node_editor() : root_node_id_(-1), minimap_location_(ImNodesMiniMapLocation_BottomRight)
 {
-    //Enables editor context movement with scroll button
+    // Enables editor context movement with the right mouse button (drag to pan)
+    ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
+
+    // Alternative dragging method for keyboard (alt + left drag)
     ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
 }
 
@@ -12,8 +15,18 @@ void node_editor::show()
 {
     ImNodes::BeginNodeEditor();
     {
-        const bool open_popup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-                                ImNodes::IsEditorHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right);
+        // Small check to secure if user just makes a right click or tries to drag
+        const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+        constexpr float drag_threshold = 4.0f;
+
+        const bool mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Right);
+        const bool x_check = fabsf(right_drag_delta.x) < drag_threshold;
+        const bool y_check = fabsf(right_drag_delta.y) < drag_threshold;
+        const bool right_click_no_drag = mouse_released && x_check && y_check;
+        const bool wnd_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+        const bool editor_hovered = ImNodes::IsEditorHovered();
+
+        const bool open_popup = wnd_focused && editor_hovered && right_click_no_drag;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
         if (!ImGui::IsAnyItemHovered() && open_popup)
@@ -115,9 +128,9 @@ void node_editor::show()
             {
                 graph_.erase_node(node_id);
                 auto iter = std::find_if(
-                        ui_nodes_.begin(), ui_nodes_.end(), [node_id](const auto& x) -> bool {
-                            return std::get<0>(x) == node_id;
-                        });
+                    ui_nodes_.begin(), ui_nodes_.end(), [node_id](const auto& x) -> bool {
+                        return std::get<0>(x) == node_id;
+                    });
                 // Erase any additional internal nodes
                 ui_nodes_.erase(iter);
             }
@@ -127,15 +140,13 @@ void node_editor::show()
     }
 
     // The color output window
-
     cv::Mat output = root_node_id_ != -1 ? evaluate(graph_, root_node_id_) : cv::Mat();
 }
 
 cv::Mat node_editor::evaluate(const graphs::Graph<std::reference_wrapper<effect>>& graph, const int root_node)
 {
     std::stack<int> postorder;
-    dfs_traverse(
-            graph, root_node, [&postorder](const int node_id) -> void { postorder.push(node_id); });
+    dfs_traverse(graph, root_node, [&postorder](const int node_id) -> void { postorder.push(node_id); });
 
     std::stack<cv::Mat> value_stack;
     while (!postorder.empty())
