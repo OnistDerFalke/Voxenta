@@ -1,5 +1,9 @@
-#include "voxenta/windows/output_img_window.h"
+﻿#include "voxenta/windows/output_img_window.h"
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 #include <imgui.h>
 

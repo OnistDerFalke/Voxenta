@@ -46,6 +46,11 @@
 
 # Precompiled Headers
 
+### Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+
 # Libraries
 
 # Shared objects (inc. Windows DLLs)
