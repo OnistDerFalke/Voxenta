@@ -1,8 +1,8 @@
-#include "voxenta/effects/effect.h"
+﻿#include "voxenta/effects/effect.h"
 
 #include <opencv2/core/mat.hpp>
 
-class effect_negative final : effect {
+class effect_negative final : public effect_clonable<effect_negative> {
 public:
     const char* get_name() override
     {
@@ -19,8 +19,12 @@ public:
         return false;
     }
 
-    cv::Mat run(cv::Mat image) override
+    std::vector<pin_value> run(const std::vector<pin_value>& inputs) override
     {
+        cv::Mat image = inputs[0].image;
+        if (image.empty())
+            return { pin_value::make_image(cv::Mat()) };
+
         effect::convert_to_rgb(&image);
 
         cv::Mat final_image = cv::Mat::zeros(image.size(), image.type());
@@ -31,7 +35,7 @@ public:
                 }
             }
         }
-        return final_image;
+        return { pin_value::make_image(final_image) };
     }
 };
 

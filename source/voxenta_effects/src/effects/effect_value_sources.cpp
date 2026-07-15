@@ -1,0 +1,50 @@
+﻿#include "voxenta/effects/effect.h"
+
+#include <imgui.h>
+
+class effect_float_source final : public effect_clonable<effect_float_source> {
+    float m_value = 0.5f;
+public:
+    const char* get_name() override { return "Float"; }
+    const char* get_description() override { return "Outputs a constant float value that can drive other nodes' parameters."; }
+    std::vector<pin_info> inputs()  const override { return {}; }
+    std::vector<pin_info> outputs() const override { return { { "Value", pin_type::float_value } }; }
+    bool run_ui() override { return ImGui::SliderFloat("Value", &m_value, 0.0f, 1.0f); }
+    std::vector<pin_value> run(const std::vector<pin_value>&) override
+    {
+        return { pin_value::make_float(m_value) };
+    }
+};
+
+class effect_int_source final : public effect_clonable<effect_int_source> {
+    int m_value = 2;
+public:
+    const char* get_name() override { return "Int"; }
+    const char* get_description() override { return "Outputs a constant integer value that can drive other nodes' parameters."; }
+    std::vector<pin_info> inputs()  const override { return {}; }
+    std::vector<pin_info> outputs() const override { return { { "Value", pin_type::int_value } }; }
+    bool run_ui() override { return ImGui::SliderInt("Value", &m_value, 0, 16); }
+    std::vector<pin_value> run(const std::vector<pin_value>&) override
+    {
+        return { pin_value::make_int(m_value) };
+    }
+};
+
+class effect_bool_source final : public effect_clonable<effect_bool_source> {
+    bool m_value = false;
+public:
+    const char* get_name() override { return "Bool"; }
+    const char* get_description() override { return "Outputs a constant boolean value that can drive other nodes' parameters."; }
+    std::vector<pin_info> inputs()  const override { return {}; }
+    std::vector<pin_info> outputs() const override { return { { "Value", pin_type::bool_value } }; }
+    bool run_ui() override { return ImGui::Checkbox("Value", &m_value); }
+    std::vector<pin_value> run(const std::vector<pin_value>&) override
+    {
+        return { pin_value::make_bool(m_value) };
+    }
+};
+
+#include "../effect_common.inl"
+REGISTER_EFFECT(effect_float_source)
+REGISTER_EFFECT(effect_int_source)
+REGISTER_EFFECT(effect_bool_source)

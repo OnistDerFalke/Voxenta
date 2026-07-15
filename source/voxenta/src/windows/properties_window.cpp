@@ -29,6 +29,8 @@ void properties_window::show() {
     just_uploaded = false; //Image was loaded event
     just_updated = false; //Image changed (effect changed or was modified) event
 
+    editor.set_input_image(base_image);
+
     // Toggle node editor fullscreen with F11
     if (ImGui::IsKeyPressed(ImGuiKey_F11)) {
         toggle_node_editor_fullscreen();
@@ -316,28 +318,62 @@ void properties_window::toggle_node_editor_fullscreen() {
 
 /* Shows node explorer as a children of properties context */
 void properties_window::show_node_explorer(ImVec2 size) {
-    const effect_list_t& effects = effect_manager::effects();
+    static std::vector<std::reference_wrapper<effect>> simple_effects;
+    simple_effects.clear();
+    for (auto& fx : effect_manager::effects()) {
+        const auto in = fx.get().inputs();
+        const auto out = fx.get().outputs();
+        if (in.size() == 1 && in[0].type == pin_type::image &&
+            out.size() == 1 && out[0].type == pin_type::image) {
+            simple_effects.push_back(fx);
+        }
+    }
+    if (current_effect_idx >= simple_effects.size())
+        current_effect_idx = 0;
 
     ImGui::BeginChild("properties", size, true);
-    if (ImGui::BeginCombo("##effect_combo", effects[current_effect_idx].get().get_name())) {
-        for (int n = 0; n < effects.size(); n++) {
-            const bool is_selected = (current_effect_idx == n);
-            if (ImGui::Selectable(effects[n].get().get_name(), is_selected)) {
+
+    const char* current_label = use_complex_effect_
+        ? "Complex Effect"
+        : simple_effects[current_effect_idx].get().get_name();
+
+    if (ImGui::BeginCombo("##effect_combo", current_label)) {
+        if (ImGui::Selectable("Complex Effect", use_complex_effect_)) {
+            use_complex_effect_ = true;
+            just_updated = true;
+        }
+        for (size_t n = 0; n < simple_effects.size(); n++) {
+            const bool is_selected = !use_complex_effect_ && (current_effect_idx == n);
+            if (ImGui::Selectable(simple_effects[n].get().get_name(), is_selected)) {
+                use_complex_effect_ = false;
                 just_updated = true;
                 current_effect_idx = n;
             }
-
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
     }
-    ImGui::Text("Effect properties:");
-    ImGui::Dummy(ImVec2(0, 5));
 
-    just_updated = just_updated || effects[current_effect_idx].get().run_ui();
-    if (!base_image.empty() && (just_updated || modified_image.empty())) {
-        modified_image = effects[this->current_effect_idx].get().run(base_image);
+    if (use_complex_effect_) {
+        ImGui::TextWrapped("Controlled by the node graph. Connect an effect chain "
+            "between \"Image Input\" and \"Image Output\".");
+    }
+    else {
+        ImGui::Text("Effect properties:");
+        ImGui::Dummy(ImVec2(0, 5));
+        just_updated = just_updated || simple_effects[current_effect_idx].get().run_ui();
+    }
+
+    if (!base_image.empty()) {
+        if (use_complex_effect_) {
+            cv::Mat graph_output = editor.get_output();
+            modified_image = graph_output.empty() ? base_image : graph_output;
+            just_updated = true;
+        }
+        else if (just_updated || modified_image.empty()) {
+            modified_image = simple_effects[current_effect_idx].get().run({ pin_value::make_image(base_image) })[0].image;
+        }
     }
 
     ImGui::EndChild();

@@ -1,4 +1,4 @@
-#ifndef VOXENTA_GRAPH_H
+﻿#ifndef VOXENTA_GRAPH_H
 #define VOXENTA_GRAPH_H
 
 #pragma once
@@ -178,9 +178,12 @@ namespace graphs
         {
             int id;
             int from, to;
+            int from_pin = 0, to_pin = 0;
 
             Edge() = default;
-            Edge(const int id, const int f, const int t) : id(id), from(f), to(t) {}
+            Edge(const int id, const int f, const int t, const int fp = 0, const int tp = 0)
+                : id(id), from(f), to(t), from_pin(fp), to_pin(tp) {
+            }
 
             inline int  opposite(const int n) const { return n == from ? to : from; }
             inline bool contains(const int n) const { return n == from || n == to; }
@@ -202,7 +205,7 @@ namespace graphs
         int  insert_node(const NodeType& node);
         void erase_node(int node_id);
 
-        int  insert_edge(int from, int to);
+        int  insert_edge(int from, int to, int from_pin = 0, int to_pin = 0);
         void erase_edge(int edge_id);
 
     private:
@@ -293,13 +296,13 @@ namespace graphs
     }
 
     template<typename NodeType>
-    int Graph<NodeType>::insert_edge(const int from, const int to)
+    int Graph<NodeType>::insert_edge(const int from, const int to, const int from_pin, const int to_pin)
     {
         const int id = current_id_++;
         assert(!edges_.contains(id));
         assert(nodes_.contains(from));
         assert(nodes_.contains(to));
-        edges_.insert(id, Edge(id, from, to));
+        edges_.insert(id, Edge(id, from, to, from_pin, to_pin));
 
         // update neighbor count
         assert(edges_from_node_.contains(from));

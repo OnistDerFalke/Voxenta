@@ -45,6 +45,7 @@ private:
     cv::Mat modified_image;
     std::stack<cv::Mat> history;
     size_t current_effect_idx;
+    bool use_complex_effect_ = false;
     std::vector<bool> shortcut_active;
     std::vector<void (properties_window::*) ()> shortcut_methods;
     std::vector<ImGuiKey> shortcut_keys;

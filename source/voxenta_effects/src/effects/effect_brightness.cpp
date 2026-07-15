@@ -1,9 +1,9 @@
-#include "voxenta/effects/effect.h"
+﻿#include "voxenta/effects/effect.h"
 
 #include <imgui.h>
 #include <opencv2/core/mat.hpp>
 
-class effect_brightness final : effect {
+class effect_brightness final : public effect_clonable<effect_brightness> {
     int m_brightness = 0;
 
 public:
@@ -20,25 +20,40 @@ public:
                "Negative value makes image darker. Zero value leaves image unchanged.";
     }
 
-    bool run_ui() override
+    std::vector<pin_info> inputs() const override
     {
-        return ImGui::SliderInt("Brightness", &m_brightness, -255, 255);
+        return {
+            { "Image",      pin_type::image },
+            { "Brightness", pin_type::int_value },
+        };
     }
 
-    cv::Mat run(cv::Mat image) override
+    bool run_ui() override
     {
+        return effect::param_slider_int("Brightness", &m_brightness, -255, 255, pin_connected(1), pin_int(1));
+    }
+
+    std::vector<pin_value> run(const std::vector<pin_value>& inputs) override
+    {
+        remember_inputs(inputs);
+        cv::Mat image = inputs[0].image;
+        if (image.empty())
+            return { pin_value::make_image(cv::Mat()) };
         effect::convert_to_rgb(&image);
+
+        const int brightness = inputs[1].connected ? inputs[1].i : m_brightness;
 
         cv::Mat final_image = cv::Mat::zeros(image.size(), image.type());
         for (int y = 0; y < image.rows; y++) {
             for (int x = 0; x < image.cols; x++) {
                 for (int c = 0; c < image.channels(); c++) {
-                    final_image.at<cv::Vec3b>(y,x)[c] = cv::saturate_cast<uchar>(
-                        image.at<cv::Vec3b>(y,x)[c] + m_brightness);
+                    final_image.at<cv::Vec3b>(y, x)[c] = cv::saturate_cast<uchar>(
+                        image.at<cv::Vec3b>(y, x)[c] + brightness);
                 }
             }
         }
-        return final_image;
+        remember_output({ pin_value::make_image(final_image) });
+        return { pin_value::make_image(final_image) };
     }
 };
 

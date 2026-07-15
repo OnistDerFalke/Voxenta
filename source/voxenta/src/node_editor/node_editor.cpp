@@ -2,20 +2,102 @@
 
 #include "voxenta/effect_manager.h"
 
-node_editor::node_editor() : root_node_id_(-1), minimap_location_(ImNodesMiniMapLocation_BottomRight)
-{
-    // Enables editor context movement with the right mouse button (drag to pan)
-    ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
+#include <cstring>
 
-    // Alternative dragging method for keyboard (alt + left drag)
+namespace {
+    constexpr float kNodeContentWidth = 140.0f;
+}
+
+node_editor::node_editor() : minimap_location_(ImNodesMiniMapLocation_BottomRight)
+{
+    ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
     ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
+}
+
+effect* node_editor::find_catalog_effect(const char* name)
+{
+    for (auto& fx : effect_manager::effects())
+        if (std::strcmp(fx.get().get_name(), name) == 0)
+            return &fx.get();
+    return nullptr;
+}
+
+int node_editor::add_node(effect& fx, ImVec2 screen_pos)
+{
+    const int node_id = graph_.insert_node(0);
+
+    ui_node node;
+    node.node_id = node_id;
+    node.fx = fx.clone();
+
+    const auto in_pins = node.fx->inputs();
+    const auto out_pins = node.fx->outputs();
+
+    for (size_t i = 0; i < in_pins.size(); ++i) {
+        const int attr_id = next_attr_id_++;
+        node.input_attr_ids.push_back(attr_id);
+        attr_info_[attr_id] = { node_id, static_cast<int>(i), true, in_pins[i].type };
+    }
+    for (size_t i = 0; i < out_pins.size(); ++i) {
+        const int attr_id = next_attr_id_++;
+        node.output_attr_ids.push_back(attr_id);
+        attr_info_[attr_id] = { node_id, static_cast<int>(i), false, out_pins[i].type };
+    }
+
+    ui_nodes_.push_back(std::move(node));
+    ImNodes::SetNodeScreenSpacePos(node_id, screen_pos);
+    return node_id;
+}
+
+void node_editor::remove_node(int node_id)
+{
+    if (node_id == input_node_id_ || node_id == output_node_id_)
+        return;
+
+    auto iter = std::find_if(ui_nodes_.begin(), ui_nodes_.end(),
+        [node_id](const ui_node& n) { return n.node_id == node_id; });
+    if (iter == ui_nodes_.end())
+        return;
+
+    for (int a : iter->input_attr_ids)  attr_info_.erase(a);
+    for (int a : iter->output_attr_ids) attr_info_.erase(a);
+
+    graph_.erase_node(node_id);
+    ui_nodes_.erase(iter);
+}
+
+bool node_editor::resolve_attr(int attr_id, attr_info& out) const
+{
+    auto iter = attr_info_.find(attr_id);
+    if (iter == attr_info_.end())
+        return false;
+    out = iter->second;
+    return true;
+}
+
+bool node_editor::find_ui_node(int node_id, ui_node** out)
+{
+    auto iter = std::find_if(ui_nodes_.begin(), ui_nodes_.end(),
+        [node_id](const ui_node& n) { return n.node_id == node_id; });
+    if (iter == ui_nodes_.end())
+        return false;
+    *out = &(*iter);
+    return true;
 }
 
 void node_editor::show()
 {
     ImNodes::BeginNodeEditor();
     {
-        // Small check to secure if user just makes a right click or tries to drag
+        if (!initialized_)
+        {
+            if (effect* img_in = find_catalog_effect("Image Input"))
+                input_node_id_ = add_node(*img_in, ImVec2(60, 200));
+            if (effect* img_out = find_catalog_effect("Image Output"))
+                output_node_id_ = add_node(*img_out, ImVec2(500, 200));
+            initialized_ = true;
+        }
+
         const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
         constexpr float drag_threshold = 4.0f;
 
@@ -38,11 +120,11 @@ void node_editor::show()
         {
             const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-            for (auto& effect : effect_manager::effects()) {
-                if (ImGui::MenuItem(effect.get().get_name())) {
-                    const int id = graph_.insert_node(effect.get());
-                    ui_nodes_.emplace_back(id, effect);
-                    ImNodes::SetNodeScreenSpacePos(id, click_pos);
+            for (auto& effect_ref : effect_manager::effects()) {
+                if (effect_ref.get().is_internal_node())
+                    continue;
+                if (ImGui::MenuItem(effect_ref.get().get_name())) {
+                    add_node(effect_ref.get(), click_pos);
                 }
             }
 
@@ -51,24 +133,57 @@ void node_editor::show()
         ImGui::PopStyleVar();
     }
 
-    for (auto [id, effect] : ui_nodes_) {
-        ImNodes::BeginNode(id);
+    for (auto& node : ui_nodes_) {
+        ImNodes::BeginNode(node.node_id);
 
         ImNodes::BeginNodeTitleBar();
-        ImGui::TextUnformatted(effect.get().get_name());
+        ImGui::TextUnformatted(node.fx->get_name());
         ImNodes::EndNodeTitleBar();
 
-        effect.get().run_ui();
+        const auto in_pins = node.fx->inputs();
+        for (size_t i = 0; i < node.input_attr_ids.size(); ++i) {
+            ImNodes::BeginInputAttribute(node.input_attr_ids[i]);
+            ImGui::TextUnformatted(in_pins[i].name);
+            ImNodes::EndInputAttribute();
+        }
 
-        ImNodes::BeginOutputAttribute(id);
-        ImGui::Text("output");
-        ImNodes::EndOutputAttribute();
+        ImGui::PushItemWidth(kNodeContentWidth);
+        node.fx->run_ui();
+        ImGui::PopItemWidth();
+
+        const auto out_pins = node.fx->outputs();
+        for (size_t i = 0; i < node.output_attr_ids.size(); ++i) {
+            ImNodes::BeginOutputAttribute(node.output_attr_ids[i]);
+            const float label_width = ImGui::CalcTextSize(out_pins[i].name).x;
+            const float offset = kNodeContentWidth - label_width;
+            if (offset > 0.0f) ImGui::Indent(offset);
+            ImGui::TextUnformatted(out_pins[i].name);
+            if (offset > 0.0f) ImGui::Unindent(offset);
+            ImNodes::EndOutputAttribute();
+        }
+
+        bool shows_image_info = false;
+        for (const auto& p : in_pins)  if (p.type == pin_type::image) shows_image_info = true;
+        for (const auto& p : out_pins) if (p.type == pin_type::image) shows_image_info = true;
+        if (shows_image_info) {
+            ImGui::Spacing();
+            ImGui::TextDisabled("%s", effect::describe_image(node.fx->get_preview_image()).c_str());
+        }
 
         ImNodes::EndNode();
     }
 
     for (const auto& edge : graph_.edges())
-        ImNodes::Link(edge.id, edge.from, edge.to);
+    {
+        ui_node* from_node = nullptr;
+        ui_node* to_node = nullptr;
+        if (find_ui_node(edge.from, &from_node) && find_ui_node(edge.to, &to_node))
+        {
+            ImNodes::Link(edge.id,
+                from_node->output_attr_ids[edge.from_pin],
+                to_node->input_attr_ids[edge.to_pin]);
+        }
+    }
 
     ImNodes::MiniMap(0.2f, minimap_location_);
     ImNodes::EndNodeEditor();
@@ -77,24 +192,26 @@ void node_editor::show()
         int start_attr, end_attr;
         if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
         {
-            const char* start_name = graph_.node(start_attr).get().get_name();
-            const char* end_name = graph_.node(end_attr).get().get_name();
-
-            const bool valid_link = start_name != end_name;
-            if (valid_link)
+            attr_info a, b;
+            if (resolve_attr(start_attr, a) && resolve_attr(end_attr, b))
             {
-                // Ensure the edge is always directed from the value to
-                // whatever produces the value
-                /*if (start_type != NodeType::value)
+                if (a.is_input) std::swap(a, b);
+
+                const bool valid_link = !a.is_input && b.is_input && a.node_id != b.node_id && a.type == b.type;
+                if (valid_link)
                 {
-                    std::swap(start_attr, end_attr);
-                }*/
-                graph_.insert_edge(start_attr, end_attr);
+                    std::vector<int> to_remove;
+                    for (const auto& e : graph_.edges())
+                        if (e.to == b.node_id && e.to_pin == b.pin_index)
+                            to_remove.push_back(e.id);
+                    for (int id : to_remove)
+                        graph_.erase_edge(id);
+
+                    graph_.insert_edge(a.node_id, b.node_id, a.pin_index, b.pin_index);
+                }
             }
         }
     }
-
-    // Handle deleted links
 
     {
         int link_id;
@@ -112,9 +229,7 @@ void node_editor::show()
             selected_links.resize(static_cast<size_t>(num_selected));
             ImNodes::GetSelectedLinks(selected_links.data());
             for (const int edge_id : selected_links)
-            {
                 graph_.erase_edge(edge_id);
-            }
         }
     }
 
@@ -125,42 +240,75 @@ void node_editor::show()
             selected_nodes_.resize(static_cast<size_t>(num_selected));
             ImNodes::GetSelectedNodes(selected_nodes_.data());
             for (const int node_id : selected_nodes_)
-            {
-                graph_.erase_node(node_id);
-                auto iter = std::find_if(
-                    ui_nodes_.begin(), ui_nodes_.end(), [node_id](const auto& x) -> bool {
-                        return std::get<0>(x) == node_id;
-                    });
-                // Erase any additional internal nodes
-                ui_nodes_.erase(iter);
-            }
+                remove_node(node_id);
 
             ImNodes::ClearNodeSelection();
         }
     }
 
-    // The color output window
-    cv::Mat output = root_node_id_ != -1 ? evaluate(graph_, root_node_id_) : cv::Mat();
+    evaluate_and_show_output();
 }
 
-cv::Mat node_editor::evaluate(const graphs::Graph<std::reference_wrapper<effect>>& graph, const int root_node)
+std::vector<pin_value> node_editor::evaluate_node(int node_id, std::unordered_map<int, std::vector<pin_value>>& cache)
 {
-    std::stack<int> postorder;
-    dfs_traverse(graph, root_node, [&postorder](const int node_id) -> void { postorder.push(node_id); });
+    if (auto it = cache.find(node_id); it != cache.end())
+        return it->second;
 
-    std::stack<cv::Mat> value_stack;
-    while (!postorder.empty())
+    ui_node* node_ptr = nullptr;
+    if (!find_ui_node(node_id, &node_ptr))
+        return {};
+
+    effect& fx = *node_ptr->fx;
+    const auto in_pins = fx.inputs();
+
+    std::vector<pin_value> inputs(in_pins.size());
+    for (size_t i = 0; i < in_pins.size(); ++i)
+        inputs[i].type = in_pins[i].type;
+
+    for (const auto& edge : graph_.edges())
     {
-        const int id = postorder.top();
-        postorder.pop();
-        effect& node = graph.node(id);
-
-        //node.run();
+        if (edge.to == node_id && edge.to_pin < static_cast<int>(inputs.size()))
+        {
+            auto upstream = evaluate_node(edge.from, cache);
+            if (edge.from_pin < static_cast<int>(upstream.size()))
+            {
+                inputs[edge.to_pin] = upstream[edge.from_pin];
+                inputs[edge.to_pin].connected = true;
+            }
+        }
     }
-    assert(value_stack.size() == 1);
-    cv::Mat output = value_stack.top();
-    value_stack.pop();
-    return output;
+
+    std::vector<pin_value> result = fx.run(inputs);
+    cache[node_id] = result;
+    return result;
+}
+
+void node_editor::evaluate_and_show_output()
+{
+    last_output_ = cv::Mat();
+    if (input_node_id_ == -1 || output_node_id_ == -1)
+        return;
+
+    ui_node* input_node = nullptr;
+    if (find_ui_node(input_node_id_, &input_node))
+        input_node->fx->set_external_image(input_image_);
+
+    std::unordered_map<int, std::vector<pin_value>> cache;
+    evaluate_node(output_node_id_, cache);
+
+    ui_node* output_node = nullptr;
+    if (find_ui_node(output_node_id_, &output_node))
+        last_output_ = output_node->fx->get_preview_image();
+}
+
+void node_editor::set_input_image(cv::Mat image)
+{
+    input_image_ = std::move(image);
+}
+
+cv::Mat node_editor::get_output() const
+{
+    return last_output_;
 }
 
 void node_editor::set_minimap_location(ImNodesMiniMapLocation location) {

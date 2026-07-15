@@ -1,11 +1,11 @@
-#include "voxenta/effects/effect.h"
+﻿#include "voxenta/effects/effect.h"
 
 #include <array>
 
 #include <imgui.h>
 #include <opencv2/core/mat.hpp>
 
-class effect_binarization final : public effect {
+class effect_binarization final : public effect_clonable<effect_binarization> {
     enum binarization_method_t {
         METHOD_MANUAL,
         METHOD_MANUAL_INV,
@@ -111,6 +111,16 @@ public:
         return binarization_method_descriptions[m_method];
     }
 
+    std::vector<pin_info> inputs() const override
+    {
+        return {
+            { "Image",         pin_type::image },
+            { "Threshold",     pin_type::int_value },
+            { "Max Value",     pin_type::int_value },
+            { "No Grayscale",  pin_type::bool_value },
+        };
+    }
+
     bool run_ui() override
     {
         bool updated = false;
@@ -124,13 +134,13 @@ public:
 
         const auto flags = binarization_method_params[m_method];
         if (flags & PARAM_THRESHOLD) {
-            F(ImGui::SliderInt("Threshold", &m_threshold, 0, 255));
+            F(effect::param_slider_int("Threshold", &m_threshold, 0, 255, pin_connected(1), pin_int(1)));
         }
         if (flags & PARAM_MAXVALUE) {
-            F(ImGui::SliderInt("Max Value", &m_maxvalue, 0, 255));
+            F(effect::param_slider_int("Max Value", &m_maxvalue, 0, 255, pin_connected(2), pin_int(2)));
         }
         if (flags & PARAM_GRAYSCALE) {
-            F(ImGui::Checkbox("No Grayscale (experimental)", &m_nograyscale));
+            F(effect::param_checkbox("No Grayscale (experimental)", &m_nograyscale, pin_connected(3), pin_bool(3)));
         }
 
 #undef F
@@ -138,24 +148,34 @@ public:
         return updated;
     }
 
-    cv::Mat run(cv::Mat image) override
+    std::vector<pin_value> run(const std::vector<pin_value>& inputs) override
     {
+        remember_inputs(inputs);
+        cv::Mat image = inputs[0].image;
+        if (image.empty())
+            return { pin_value::make_image(cv::Mat()) };
+
         cv::Mat final_image, grayscale_image;
         effect::convert_to_rgb(&image);
         cv::cvtColor(image, grayscale_image, cv::COLOR_BGR2GRAY);
 
         const auto flags = binarization_method_params[m_method];
 
-        if(flags & PARAM_GRAYSCALE && m_nograyscale)
+        const int  threshold = inputs[1].connected ? inputs[1].i : m_threshold;
+        const int  maxvalue = inputs[2].connected ? inputs[2].i : m_maxvalue;
+        const bool nograyscale = inputs[3].connected ? inputs[3].b : m_nograyscale;
+
+        if (flags & PARAM_GRAYSCALE && nograyscale)
             grayscale_image = image;
 
-        int thresh = (flags & PARAM_THRESHOLD) ? m_threshold : 0;
-        int maxval = (flags & PARAM_MAXVALUE) ? m_maxvalue : 0;
+        int thresh = (flags & PARAM_THRESHOLD) ? threshold : 0;
+        int maxval = (flags & PARAM_MAXVALUE) ? maxvalue : 0;
         int type = binarization_method_types[m_method];
 
         cv::threshold(grayscale_image, final_image, thresh, maxval, type);
 
-        return final_image;
+        remember_output({ pin_value::make_image(final_image) });
+        return { pin_value::make_image(final_image) };
     }
 };
 
