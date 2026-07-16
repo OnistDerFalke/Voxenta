@@ -24,7 +24,7 @@ public:
     {
         return {
             { "Image",    pin_type::image },
-            { "Contrast", pin_type::float_value },
+            { "Contrast", pin_type::float_value, true, 0.0f, 25.0f },
         };
     }
 

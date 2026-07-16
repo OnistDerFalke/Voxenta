@@ -46,6 +46,7 @@ private:
 
     std::vector<pin_value> evaluate_node(int node_id, std::unordered_map<int, std::vector<pin_value>>& cache);
     void evaluate_and_show_output();
+    void update_downstream_ranges();
 
     graphs::Graph<int> graph_;
     std::vector<ui_node> ui_nodes_;

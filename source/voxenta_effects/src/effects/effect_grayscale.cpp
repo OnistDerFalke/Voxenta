@@ -27,9 +27,9 @@ public:
     {
         return {
             { "Image",        pin_type::image },
-            { "Red Weight",   pin_type::float_value },
-            { "Green Weight", pin_type::float_value },
-            { "Blue Weight",  pin_type::float_value },
+            { "Red Weight",   pin_type::float_value, true, 0.0f, 1.0f },
+            { "Green Weight", pin_type::float_value, true, 0.0f, 1.0f },
+            { "Blue Weight",  pin_type::float_value, true, 0.0f, 1.0f },
         };
     }
 

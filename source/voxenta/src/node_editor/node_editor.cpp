@@ -87,6 +87,8 @@ bool node_editor::find_ui_node(int node_id, ui_node** out)
 
 void node_editor::show()
 {
+    update_downstream_ranges();
+
     ImNodes::BeginNodeEditor();
     {
         if (!initialized_)
@@ -222,6 +224,14 @@ void node_editor::show()
     }
 
     {
+        int hovered_link_id;
+        if (ImNodes::IsLinkHovered(&hovered_link_id) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            graph_.erase_edge(hovered_link_id);
+        }
+    }
+
+    {
         const int num_selected = ImNodes::NumSelectedLinks();
         if (num_selected > 0 && ImGui::IsKeyReleased(ImGuiKey_X))
         {
@@ -283,22 +293,65 @@ std::vector<pin_value> node_editor::evaluate_node(int node_id, std::unordered_ma
     return result;
 }
 
+void node_editor::update_downstream_ranges()
+{
+    for (auto& node : ui_nodes_)
+    {
+        const auto out_pins = node.fx->outputs();
+        if (out_pins.size() != 1)
+            continue;
+        if (out_pins[0].type != pin_type::float_value && out_pins[0].type != pin_type::int_value)
+            continue;
+
+        bool  has_range = false;
+        float range_min = 0.0f, range_max = 0.0f;
+
+        for (const auto& edge : graph_.edges())
+        {
+            if (edge.from != node.node_id || edge.from_pin != 0)
+                continue;
+
+            ui_node* target = nullptr;
+            if (!find_ui_node(edge.to, &target))
+                continue;
+
+            const auto target_in_pins = target->fx->inputs();
+            if (edge.to_pin >= static_cast<int>(target_in_pins.size()))
+                continue;
+
+            const auto& pin = target_in_pins[edge.to_pin];
+            if (pin.has_range)
+            {
+                has_range = true;
+                range_min = pin.min;
+                range_max = pin.max;
+                break;
+            }
+        }
+
+        node.fx->set_downstream_range(has_range, range_min, range_max);
+    }
+}
+
 void node_editor::evaluate_and_show_output()
 {
     last_output_ = cv::Mat();
-    if (input_node_id_ == -1 || output_node_id_ == -1)
-        return;
 
     ui_node* input_node = nullptr;
-    if (find_ui_node(input_node_id_, &input_node))
+    if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node))
         input_node->fx->set_external_image(input_image_);
 
     std::unordered_map<int, std::vector<pin_value>> cache;
-    evaluate_node(output_node_id_, cache);
 
-    ui_node* output_node = nullptr;
-    if (find_ui_node(output_node_id_, &output_node))
-        last_output_ = output_node->fx->get_preview_image();
+    for (const auto& node : ui_nodes_)
+        evaluate_node(node.node_id, cache);
+
+    if (output_node_id_ != -1)
+    {
+        ui_node* output_node = nullptr;
+        if (find_ui_node(output_node_id_, &output_node))
+            last_output_ = output_node->fx->get_preview_image();
+    }
 }
 
 void node_editor::set_input_image(cv::Mat image)

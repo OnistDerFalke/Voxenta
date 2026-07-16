@@ -24,7 +24,7 @@ public:
     {
         return {
             { "Image",      pin_type::image },
-            { "Brightness", pin_type::int_value },
+            { "Brightness", pin_type::int_value, true, -255.0f, 255.0f },
         };
     }
 

@@ -28,8 +28,8 @@ public:
     {
         return {
             { "Image",    pin_type::image },
-            { "Strength", pin_type::float_value },
-            { "Softness", pin_type::int_value },
+            { "Strength", pin_type::float_value, true, 0.0f, 1.0f },
+            { "Softness", pin_type::int_value, true, 1.0f, 8.0f },
             { "Invert",   pin_type::bool_value },
         };
     }

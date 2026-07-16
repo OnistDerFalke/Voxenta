@@ -1,5 +1,6 @@
 ﻿#include "voxenta/effects/effect.h"
 #include <imgui.h>
+#include <algorithm>
 
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
 extern "C" {
@@ -20,9 +21,9 @@ std::string effect::describe_image(const cv::Mat& img) {
 
     const char* color_space = "Unknown";
     switch (img.channels()) {
-    case 1: color_space = "Grayscale"; break;
-    case 3: color_space = "BGR"; break;
-    case 4: color_space = "BGRA"; break;
+        case 1: color_space = "Grayscale"; break;
+        case 3: color_space = "BGR"; break;
+        case 4: color_space = "BGRA"; break;
     }
 
     char buf[64];
@@ -64,6 +65,24 @@ bool effect::param_checkbox(const char* label, bool* value, bool connected, bool
         return false;
     }
     return ImGui::Checkbox(label, value);
+}
+
+bool effect::source_value_float(const char* label, float* value, bool has_range, float min, float max)
+{
+    if (has_range) {
+        *value = std::clamp(*value, min, max);
+        return ImGui::SliderFloat(label, value, min, max);
+    }
+    return ImGui::InputFloat(label, value);
+}
+
+bool effect::source_value_int(const char* label, int* value, bool has_range, int min, int max)
+{
+    if (has_range) {
+        *value = std::clamp(*value, min, max);
+        return ImGui::SliderInt(label, value, min, max);
+    }
+    return ImGui::InputInt(label, value);
 }
 
 void effect::convert_to_rgb(cv::Mat* img) {

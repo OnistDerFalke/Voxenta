@@ -115,8 +115,8 @@ public:
     {
         return {
             { "Image",         pin_type::image },
-            { "Threshold",     pin_type::int_value },
-            { "Max Value",     pin_type::int_value },
+            { "Threshold",     pin_type::int_value, true, 0.0f, 255.0f },
+            { "Max Value",     pin_type::int_value, true, 0.0f, 255.0f },
             { "No Grayscale",  pin_type::bool_value },
         };
     }
