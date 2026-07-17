@@ -28,6 +28,10 @@ private:
         std::unique_ptr<effect> fx;
         std::vector<int> input_attr_ids;
         std::vector<int> output_attr_ids;
+
+        void* thumbnail_texture = nullptr;
+        int   thumbnail_tex_w = 0;
+        int   thumbnail_tex_h = 0;
     };
 
     struct attr_info {
@@ -39,6 +43,7 @@ private:
 
     int  add_node(effect& fx, ImVec2 screen_pos);
     void remove_node(int node_id);
+    void update_node_thumbnail(ui_node& node);
 
     bool resolve_attr(int attr_id, attr_info& out) const;
     bool find_ui_node(int node_id, ui_node** out);

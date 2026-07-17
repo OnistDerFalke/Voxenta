@@ -3,6 +3,13 @@
 
 #include <cstring>
 #include <algorithm>
+#include <cstdint>
+
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
+#include <GL/gl.h>
 
 namespace {
     constexpr float kNodeContentWidth = 140.0f;
@@ -59,6 +66,11 @@ void node_editor::remove_node(int node_id)
         [node_id](const ui_node& n) { return n.node_id == node_id; });
     if (iter == ui_nodes_.end())
         return;
+
+    if (iter->thumbnail_texture != nullptr) {
+        GLuint tex = static_cast<GLuint>(reinterpret_cast<intptr_t>(iter->thumbnail_texture));
+        glDeleteTextures(1, &tex);
+    }
 
     for (int a : iter->input_attr_ids)  attr_info_.erase(a);
     for (int a : iter->output_attr_ids) attr_info_.erase(a);
@@ -191,8 +203,18 @@ void node_editor::show()
         for (const auto& p : in_pins)  if (p.type == pin_type::image) shows_image_info = true;
         for (const auto& p : out_pins) if (p.type == pin_type::image) shows_image_info = true;
         if (shows_image_info) {
+            update_node_thumbnail(node);
+
+            const cv::Mat preview = node.fx->get_preview_image();
+            if (!preview.empty() && node.thumbnail_texture != nullptr && node.thumbnail_tex_w > 0) {
+                ImGui::Spacing();
+                const float display_w = scaled_content_width;
+                const float display_h = display_w * static_cast<float>(node.thumbnail_tex_h) / static_cast<float>(node.thumbnail_tex_w);
+                ImGui::Image(node.thumbnail_texture, ImVec2(display_w, display_h));
+            }
+
             ImGui::Spacing();
-            ImGui::TextDisabled("%s", effect::describe_image(node.fx->get_preview_image()).c_str());
+            ImGui::TextDisabled("%s", effect::describe_image(preview).c_str());
         }
 
         ImNodes::EndNode();
@@ -373,6 +395,50 @@ std::vector<pin_value> node_editor::evaluate_node(int node_id, std::unordered_ma
     std::vector<pin_value> result = fx.run(inputs);
     cache[node_id] = result;
     return result;
+}
+
+void node_editor::update_node_thumbnail(ui_node& node)
+{
+    cv::Mat img = node.fx->get_preview_image();
+    if (img.empty())
+        return;
+
+    constexpr int kMaxThumbDim = 256;
+    cv::Mat thumb;
+    if (img.cols >= img.rows) {
+        const int w = std::min(img.cols, kMaxThumbDim);
+        const int h = std::max(1, static_cast<int>(static_cast<float>(img.rows) * w / img.cols));
+        cv::resize(img, thumb, cv::Size(w, h));
+    }
+    else {
+        const int h = std::min(img.rows, kMaxThumbDim);
+        const int w = std::max(1, static_cast<int>(static_cast<float>(img.cols) * h / img.rows));
+        cv::resize(img, thumb, cv::Size(w, h));
+    }
+
+    cv::Mat rgb;
+    if (thumb.channels() == 1)
+        cv::cvtColor(thumb, rgb, cv::COLOR_GRAY2RGB);
+    else
+        cv::cvtColor(thumb, rgb, cv::COLOR_BGR2RGB);
+
+    GLuint texture;
+    if (node.thumbnail_texture == nullptr) {
+        glGenTextures(1, &texture);
+        node.thumbnail_texture = reinterpret_cast<void*>(static_cast<intptr_t>(texture));
+    }
+    else {
+        texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(node.thumbnail_texture));
+    }
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rgb.cols, rgb.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb.ptr());
+
+    node.thumbnail_tex_w = rgb.cols;
+    node.thumbnail_tex_h = rgb.rows;
 }
 
 void node_editor::update_downstream_ranges()
