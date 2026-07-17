@@ -90,6 +90,17 @@ void node_editor::show()
     update_downstream_ranges();
 
     ImNodes::BeginNodeEditor();
+
+    const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+    constexpr float drag_threshold = 4.0f;
+    const bool mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Right);
+    const bool x_check = fabsf(right_drag_delta.x) < drag_threshold;
+    const bool y_check = fabsf(right_drag_delta.y) < drag_threshold;
+    const bool right_click_no_drag = mouse_released && x_check && y_check;
+    const bool wnd_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    const bool editor_hovered = ImNodes::IsEditorHovered();
+    const bool open_popup = wnd_focused && editor_hovered && right_click_no_drag && !ImGui::IsAnyItemHovered();
+
     {
         if (!initialized_)
         {
@@ -99,40 +110,6 @@ void node_editor::show()
                 output_node_id_ = add_node(*img_out, ImVec2(500, 200));
             initialized_ = true;
         }
-
-        const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
-        constexpr float drag_threshold = 4.0f;
-
-        const bool mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Right);
-        const bool x_check = fabsf(right_drag_delta.x) < drag_threshold;
-        const bool y_check = fabsf(right_drag_delta.y) < drag_threshold;
-        const bool right_click_no_drag = mouse_released && x_check && y_check;
-        const bool wnd_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-        const bool editor_hovered = ImNodes::IsEditorHovered();
-
-        const bool open_popup = wnd_focused && editor_hovered && right_click_no_drag;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
-        if (!ImGui::IsAnyItemHovered() && open_popup)
-        {
-            ImGui::OpenPopup("add node");
-        }
-
-        if (ImGui::BeginPopup("add node"))
-        {
-            const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
-
-            for (auto& effect_ref : effect_manager::effects()) {
-                if (effect_ref.get().is_internal_node())
-                    continue;
-                if (ImGui::MenuItem(effect_ref.get().get_name())) {
-                    add_node(effect_ref.get(), click_pos);
-                }
-            }
-
-            ImGui::EndPopup();
-        }
-        ImGui::PopStyleVar();
     }
 
     for (auto& node : ui_nodes_) {
@@ -189,6 +166,51 @@ void node_editor::show()
 
     ImNodes::MiniMap(0.2f, minimap_location_);
     ImNodes::EndNodeEditor();
+
+    {
+        const bool node_hovered = ImNodes::IsNodeHovered(&hovered_node_id_);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
+        if (open_popup)
+        {
+            if (node_hovered)
+                ImGui::OpenPopup("node context");
+            else
+                ImGui::OpenPopup("add node");
+        }
+
+        if (ImGui::BeginPopup("add node"))
+        {
+            const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
+
+            for (auto& effect_ref : effect_manager::effects()) {
+                if (effect_ref.get().is_internal_node())
+                    continue;
+                if (ImGui::MenuItem(effect_ref.get().get_name())) {
+                    add_node(effect_ref.get(), click_pos);
+                }
+            }
+
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopup("node context"))
+        {
+            const bool is_mandatory = (hovered_node_id_ == input_node_id_ || hovered_node_id_ == output_node_id_);
+
+            if (is_mandatory) {
+                ImGui::BeginDisabled();
+                ImGui::MenuItem("Delete");
+                ImGui::EndDisabled();
+            }
+            else if (ImGui::MenuItem("Delete")) {
+                remove_node(hovered_node_id_);
+            }
+
+            ImGui::EndPopup();
+        }
+        ImGui::PopStyleVar();
+    }
 
     {
         int start_attr, end_attr;

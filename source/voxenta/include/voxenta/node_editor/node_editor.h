@@ -54,6 +54,8 @@ private:
     int next_attr_id_ = 1'000'000;
 
     std::vector<int> selected_nodes_;
+    int hovered_node_id_ = -1;
+
     ImNodesMiniMapLocation minimap_location_;
     float current_time_seconds = 0.f;
 
