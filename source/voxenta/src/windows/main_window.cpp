@@ -1,4 +1,4 @@
-#include "voxenta/windows/main_window.h"
+﻿#include "voxenta/windows/main_window.h"
 #include "voxenta/windows/input_img_window.h"
 #include "voxenta/windows/output_img_window.h"
 #include "voxenta/windows/properties_window.h"
@@ -140,6 +140,14 @@ main_window::main_window() {
 
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    //I just added it for fighting oversampling
+    ImFontConfig font_config;
+    font_config.OversampleH = 1;
+    font_config.OversampleV = 1;
+    if (io.Fonts->AddFontFromFileTTF(VOXENTA_FONTS_DIR "segoeui.ttf", 24.0f, &font_config) == nullptr) {
+        fprintf(stderr, "Could not load font. Fallbacking default.\n");
+    }
 
     //Setting style for the application
     set_ui_style();

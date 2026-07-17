@@ -1,4 +1,4 @@
-add_executable(voxenta
+﻿add_executable(voxenta
         src/effect_manager.cpp
         src/main.cpp
 
@@ -27,6 +27,9 @@ target_link_libraries(voxenta PRIVATE
         imnodes
         nfd
 )
+
+target_compile_definitions(voxenta PRIVATE
+    VOXENTA_FONTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../fonts/")
 
 if (VOXENTA_EFFECTS_HOT_RELOAD)
     target_compile_definitions(voxenta PRIVATE VOXENTA_EFFECTS_HOT_RELOAD)
