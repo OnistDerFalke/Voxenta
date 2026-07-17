@@ -57,6 +57,8 @@ private:
     int hovered_node_id_ = -1;
 
     ImNodesMiniMapLocation minimap_location_;
+    float ui_scale_ = 1.0f;
+    ImNodesStyle base_style_;
     float current_time_seconds = 0.f;
 
     bool initialized_ = false;

@@ -1,8 +1,8 @@
 ﻿#include "voxenta/node_editor/node_editor.h"
-
 #include "voxenta/effect_manager.h"
 
 #include <cstring>
+#include <algorithm>
 
 namespace {
     constexpr float kNodeContentWidth = 140.0f;
@@ -12,6 +12,7 @@ node_editor::node_editor() : minimap_location_(ImNodesMiniMapLocation_BottomRigh
 {
     ImNodes::GetIO().AltMouseButton = ImGuiMouseButton_Right;
     ImNodes::GetIO().EmulateThreeButtonMouse.Modifier = &ImGui::GetIO().KeyAlt;
+    base_style_ = ImNodes::GetStyle();
 }
 
 effect* node_editor::find_catalog_effect(const char* name)
@@ -89,6 +90,22 @@ void node_editor::show()
 {
     update_downstream_ranges();
 
+    ImGui::BeginChild("node_editor_canvas", ImVec2(0, 0), false,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+    ImGui::SetWindowFontScale(ui_scale_);
+
+    ImNodesStyle& style = ImNodes::GetStyle();
+    style.GridSpacing = base_style_.GridSpacing * ui_scale_;
+    style.NodeCornerRounding = base_style_.NodeCornerRounding * ui_scale_;
+    style.NodeBorderThickness = base_style_.NodeBorderThickness * ui_scale_;
+    style.NodePadding = ImVec2(base_style_.NodePadding.x * ui_scale_, base_style_.NodePadding.y * ui_scale_);
+    style.PinCircleRadius = base_style_.PinCircleRadius * ui_scale_;
+    style.PinQuadSideLength = base_style_.PinQuadSideLength * ui_scale_;
+    style.PinTriangleSideLength = base_style_.PinTriangleSideLength * ui_scale_;
+    style.PinLineThickness = base_style_.PinLineThickness * ui_scale_;
+    style.LinkThickness = base_style_.LinkThickness * ui_scale_;
+
     ImNodes::BeginNodeEditor();
 
     const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
@@ -100,6 +117,33 @@ void node_editor::show()
     const bool wnd_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     const bool editor_hovered = ImNodes::IsEditorHovered();
     const bool open_popup = wnd_focused && editor_hovered && right_click_no_drag && !ImGui::IsAnyItemHovered();
+
+    if (editor_hovered)
+    {
+        const float wheel = ImGui::GetIO().MouseWheel;
+        if (wheel != 0.0f)
+        {
+            const float old_scale = ui_scale_;
+            const float new_scale = std::clamp(old_scale + wheel * 0.1f, 0.4f, 1.5f);
+
+            if (new_scale != old_scale)
+            {
+                const float ratio = new_scale / old_scale;
+                const ImVec2 pivot = ImGui::GetMousePos();
+
+                for (auto& node : ui_nodes_)
+                {
+                    const ImVec2 pos = ImNodes::GetNodeScreenSpacePos(node.node_id);
+                    const ImVec2 new_pos(
+                        pivot.x + (pos.x - pivot.x) * ratio,
+                        pivot.y + (pos.y - pivot.y) * ratio);
+                    ImNodes::SetNodeScreenSpacePos(node.node_id, new_pos);
+                }
+            }
+
+            ui_scale_ = new_scale;
+        }
+    }
 
     {
         if (!initialized_)
@@ -126,7 +170,9 @@ void node_editor::show()
             ImNodes::EndInputAttribute();
         }
 
-        ImGui::PushItemWidth(kNodeContentWidth);
+        const float scaled_content_width = kNodeContentWidth * ui_scale_;
+
+        ImGui::PushItemWidth(scaled_content_width);
         node.fx->run_ui();
         ImGui::PopItemWidth();
 
@@ -134,7 +180,7 @@ void node_editor::show()
         for (size_t i = 0; i < node.output_attr_ids.size(); ++i) {
             ImNodes::BeginOutputAttribute(node.output_attr_ids[i]);
             const float label_width = ImGui::CalcTextSize(out_pins[i].name).x;
-            const float offset = kNodeContentWidth - label_width;
+            const float offset = scaled_content_width - label_width;
             if (offset > 0.0f) ImGui::Indent(offset);
             ImGui::TextUnformatted(out_pins[i].name);
             if (offset > 0.0f) ImGui::Unindent(offset);
@@ -166,6 +212,18 @@ void node_editor::show()
 
     ImNodes::MiniMap(0.2f, minimap_location_);
     ImNodes::EndNodeEditor();
+
+    style.GridSpacing = base_style_.GridSpacing;
+    style.NodeCornerRounding = base_style_.NodeCornerRounding;
+    style.NodeBorderThickness = base_style_.NodeBorderThickness;
+    style.NodePadding = base_style_.NodePadding;
+    style.PinCircleRadius = base_style_.PinCircleRadius;
+    style.PinQuadSideLength = base_style_.PinQuadSideLength;
+    style.PinTriangleSideLength = base_style_.PinTriangleSideLength;
+    style.PinLineThickness = base_style_.PinLineThickness;
+    style.LinkThickness = base_style_.LinkThickness;
+
+    ImGui::SetWindowFontScale(1.0f);
 
     {
         const bool node_hovered = ImNodes::IsNodeHovered(&hovered_node_id_);
@@ -277,6 +335,8 @@ void node_editor::show()
             ImNodes::ClearNodeSelection();
         }
     }
+
+    ImGui::EndChild();
 
     evaluate_and_show_output();
 }
