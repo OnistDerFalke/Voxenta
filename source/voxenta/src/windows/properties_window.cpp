@@ -30,6 +30,7 @@ void properties_window::show() {
     just_updated = false; //Image changed (effect changed or was modified) event
 
     editor.set_input_image(base_image);
+    editor.set_input_extension(last_load_path.extension().string());
 
     // Toggle node editor fullscreen with F11
     if (ImGui::IsKeyPressed(ImGuiKey_F11)) {

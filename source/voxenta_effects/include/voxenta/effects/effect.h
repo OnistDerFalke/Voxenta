@@ -77,7 +77,11 @@ public:
     virtual cv::Mat get_preview_image() const { return m_last_output_image; }
     virtual void set_downstream_range(bool has_range, float min, float max) {}
 
-    static std::string describe_image(const cv::Mat& img);
+    static std::string describe_resolution(const cv::Mat& img);
+    static std::string describe_color_space(const cv::Mat& img);
+
+    virtual std::string get_source_extension() const { return m_source_extension; }
+    virtual void set_external_extension(const std::string&) {}
 
 protected:
     static void convert_to_rgb(cv::Mat* img);
@@ -95,6 +99,8 @@ protected:
         }
     }
 
+    void remember_source_extension(const std::string& ext) { m_source_extension = ext; }
+
     static bool param_slider_float(const char* label, float* value, float min, float max, bool connected, float live_value);
     static bool param_slider_int(const char* label, int* value, int min, int max, bool connected, int live_value);
     static bool param_checkbox(const char* label, bool* value, bool connected, bool live_value);
@@ -104,6 +110,7 @@ protected:
 private:
     std::vector<pin_value> m_last_inputs;
     cv::Mat m_last_output_image;
+    std::string m_source_extension;
 };
 
 template<typename Derived>

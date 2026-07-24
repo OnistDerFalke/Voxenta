@@ -127,7 +127,8 @@ public:
 
 #define F(fn) updated = (fn) || updated;
 
-        F(ImGui::Combo("Method",
+        ImGui::TextUnformatted("Method");
+        F(ImGui::Combo("##Method",
             reinterpret_cast<int*>(&m_method),
             binarization_method_names.data(),
             binarization_method_names.size()));
@@ -152,8 +153,11 @@ public:
     {
         remember_inputs(inputs);
         cv::Mat image = inputs[0].image;
-        if (image.empty())
+
+        if (image.empty()) {
+            remember_output({ pin_value::make_image(cv::Mat()) });
             return { pin_value::make_image(cv::Mat()) };
+        }
 
         cv::Mat final_image, grayscale_image;
         effect::convert_to_rgb(&image);

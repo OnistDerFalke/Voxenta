@@ -22,8 +22,11 @@ public:
     std::vector<pin_value> run(const std::vector<pin_value>& inputs) override
     {
         cv::Mat image = inputs[0].image;
-        if (image.empty())
+
+        if (image.empty()) {
+            remember_output({ pin_value::make_image(cv::Mat()) });
             return { pin_value::make_image(cv::Mat()) };
+        }
 
         effect::convert_to_rgb(&image);
 
@@ -35,6 +38,7 @@ public:
                 }
             }
         }
+        remember_output({ pin_value::make_image(final_image) });
         return { pin_value::make_image(final_image) };
     }
 };

@@ -13,6 +13,22 @@
 
 namespace {
     constexpr float kNodeContentWidth = 140.0f;
+    constexpr float kThumbBoxHeight = 90.0f;
+
+    void draw_small_label(float width, const char* label)
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImFont* font = ImGui::GetFont();
+        const float font_size = ImGui::GetFontSize() * 0.5f;
+
+        const ImVec2 text_size = font->CalcTextSizeA(font_size, 10000.0f, 0.0f, label);
+        const ImVec2 pos = ImGui::GetCursorScreenPos();
+        const ImVec2 text_pos(pos.x + (width - text_size.x) * 0.5f, pos.y);
+
+        draw_list->AddText(font, font_size, text_pos, ImGui::GetColorU32(ImGuiCol_TextDisabled), label);
+
+        ImGui::Dummy(ImVec2(width, text_size.y + 2.0f));
+    }
 }
 
 node_editor::node_editor() : minimap_location_(ImNodesMiniMapLocation_BottomRight)
@@ -176,19 +192,27 @@ void node_editor::show()
         ImNodes::EndNodeTitleBar();
 
         const auto in_pins = node.fx->inputs();
+        const auto out_pins = node.fx->outputs();
+
+        float content_width = kNodeContentWidth * ui_scale_;
+        for (const auto& p : in_pins)  content_width = std::max(content_width, ImGui::CalcTextSize(p.name).x);
+        for (const auto& p : out_pins) content_width = std::max(content_width, ImGui::CalcTextSize(p.name).x);
+        const float scaled_content_width = content_width;
+
         for (size_t i = 0; i < node.input_attr_ids.size(); ++i) {
             ImNodes::BeginInputAttribute(node.input_attr_ids[i]);
             ImGui::TextUnformatted(in_pins[i].name);
             ImNodes::EndInputAttribute();
         }
 
-        const float scaled_content_width = kNodeContentWidth * ui_scale_;
+        if (!in_pins.empty()) {
+            ImGui::Dummy(ImVec2(0.0f, 6.0f * ui_scale_));
+        }
 
         ImGui::PushItemWidth(scaled_content_width);
         node.fx->run_ui();
         ImGui::PopItemWidth();
 
-        const auto out_pins = node.fx->outputs();
         for (size_t i = 0; i < node.output_attr_ids.size(); ++i) {
             ImNodes::BeginOutputAttribute(node.output_attr_ids[i]);
             const float label_width = ImGui::CalcTextSize(out_pins[i].name).x;
@@ -199,6 +223,10 @@ void node_editor::show()
             ImNodes::EndOutputAttribute();
         }
 
+        if (!out_pins.empty()) {
+            ImGui::Dummy(ImVec2(0.0f, 6.0f * ui_scale_));
+        }
+
         bool shows_image_info = false;
         for (const auto& p : in_pins)  if (p.type == pin_type::image) shows_image_info = true;
         for (const auto& p : out_pins) if (p.type == pin_type::image) shows_image_info = true;
@@ -206,15 +234,50 @@ void node_editor::show()
             update_node_thumbnail(node);
 
             const cv::Mat preview = node.fx->get_preview_image();
-            if (!preview.empty() && node.thumbnail_texture != nullptr && node.thumbnail_tex_w > 0) {
-                ImGui::Spacing();
-                const float display_w = scaled_content_width;
-                const float display_h = display_w * static_cast<float>(node.thumbnail_tex_h) / static_cast<float>(node.thumbnail_tex_w);
-                ImGui::Image(node.thumbnail_texture, ImVec2(display_w, display_h));
-            }
+            const float box_w = scaled_content_width;
+            const float box_h = kThumbBoxHeight * ui_scale_;
+
+            const float center_indent = 0.0f;
 
             ImGui::Spacing();
-            ImGui::TextDisabled("%s", effect::describe_image(preview).c_str());
+            if (center_indent > 0.0f) ImGui::Indent(center_indent);
+
+            const ImVec2 box_pos = ImGui::GetCursorScreenPos();
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+            draw_list->AddRectFilled(box_pos, ImVec2(box_pos.x + box_w, box_pos.y + box_h), IM_COL32(25, 25, 25, 255), 4.0f);
+
+            if (!preview.empty() && node.thumbnail_texture != nullptr && node.thumbnail_tex_w > 0) {
+                const float img_aspect = static_cast<float>(node.thumbnail_tex_w) / static_cast<float>(node.thumbnail_tex_h);
+                const float box_aspect = box_w / box_h;
+
+                float draw_w, draw_h;
+                if (img_aspect > box_aspect) {
+                    draw_w = box_w;
+                    draw_h = box_w / img_aspect;
+                }
+                else {
+                    draw_h = box_h;
+                    draw_w = box_h * img_aspect;
+                }
+
+                const ImVec2 img_pos(box_pos.x + (box_w - draw_w) * 0.5f, box_pos.y + (box_h - draw_h) * 0.5f);
+                draw_list->AddImage(node.thumbnail_texture, img_pos, ImVec2(img_pos.x + draw_w, img_pos.y + draw_h));
+            }
+
+            ImGui::Dummy(ImVec2(box_w, box_h));
+            ImGui::Spacing();
+
+            const std::string size_label = "Size: " + effect::describe_resolution(preview);
+            draw_small_label(box_w, size_label.c_str());
+
+            if (node.node_id == input_node_id_) {
+                const std::string ext = node.fx->get_source_extension();
+                const std::string ext_label = "Extension: " + (ext.empty() ? std::string("-") : ext);
+                draw_small_label(box_w, ext_label.c_str());
+            }
+
+            if (center_indent > 0.0f) ImGui::Unindent(center_indent);
         }
 
         ImNodes::EndNode();
@@ -496,15 +559,22 @@ void node_editor::evaluate_and_show_output()
 
     if (output_node_id_ != -1)
     {
-        ui_node* output_node = nullptr;
-        if (find_ui_node(output_node_id_, &output_node))
-            last_output_ = output_node->fx->get_preview_image();
+        ui_node* input_node = nullptr;
+        if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node)) {
+            input_node->fx->set_external_image(input_image_);
+            input_node->fx->set_external_extension(input_extension_);
+        }
     }
 }
 
 void node_editor::set_input_image(cv::Mat image)
 {
     input_image_ = std::move(image);
+}
+
+void node_editor::set_input_extension(std::string extension)
+{
+    input_extension_ = std::move(extension);
 }
 
 cv::Mat node_editor::get_output() const

@@ -48,8 +48,12 @@ public:
     {
         remember_inputs(inputs);
         cv::Mat image = inputs[0].image;
-        if (image.empty())
+
+        if (image.empty()) {
+            remember_output({ pin_value::make_image(cv::Mat()) });
             return { pin_value::make_image(cv::Mat()) };
+        }
+
         effect::convert_to_rgb(&image);
 
         const float red = inputs[1].connected ? inputs[1].f : m_red;

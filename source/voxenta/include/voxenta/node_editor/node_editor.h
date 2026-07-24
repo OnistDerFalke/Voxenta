@@ -19,7 +19,8 @@ public:
     void set_minimap_location(ImNodesMiniMapLocation location);
     ImNodesMiniMapLocation get_minimap_location() const;
 
-    void    set_input_image(cv::Mat image);
+    void set_input_image(cv::Mat image);
+    void set_input_extension(std::string extension);
     cv::Mat get_output() const;
 
 private:
@@ -70,6 +71,7 @@ private:
     int input_node_id_ = -1;
     int output_node_id_ = -1;
     cv::Mat input_image_;
+    std::string input_extension_;
     cv::Mat last_output_;
 };
 

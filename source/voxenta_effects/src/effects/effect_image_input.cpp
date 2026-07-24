@@ -18,6 +18,7 @@ public:
     std::vector<pin_info> outputs() const override { return { { "Image", pin_type::image } }; }
 
     void set_external_image(const cv::Mat& img) override { m_current_image = img; }
+    void set_external_extension(const std::string& ext) override { remember_source_extension(ext); }
     cv::Mat get_preview_image() const override { return m_current_image; }
 
     bool run_ui() override

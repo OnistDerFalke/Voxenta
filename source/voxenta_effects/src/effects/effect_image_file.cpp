@@ -32,6 +32,10 @@ public:
                 if (loaded.data != nullptr) {
                     m_image = loaded;
                     updated = true;
+
+                    const std::string path_str = out_path.get();
+                    const size_t dot_pos = path_str.find_last_of('.');
+                    remember_source_extension(dot_pos != std::string::npos ? path_str.substr(dot_pos) : "");
                 }
                 else {
                     fprintf(stderr, "invalid file format\n");
