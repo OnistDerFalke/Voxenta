@@ -135,6 +135,7 @@ void node_editor::show()
     style.LinkThickness = base_style_.LinkThickness * ui_scale_;
 
     ImNodes::BeginNodeEditor();
+    ImNodes::PushAttributeFlag(ImNodesAttributeFlags_None);
 
     const ImVec2 right_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
     constexpr float drag_threshold = 4.0f;
@@ -361,6 +362,7 @@ void node_editor::show()
         }
     }
 
+    ImNodes::PopAttributeFlag();
     ImNodes::MiniMap(0.2f, minimap_location_);
     ImNodes::EndNodeEditor();
 
@@ -456,9 +458,18 @@ void node_editor::show()
 
     {
         int hovered_link_id;
-        if (ImNodes::IsLinkHovered(&hovered_link_id) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        if (ImNodes::IsLinkHovered(&hovered_link_id))
         {
-            graph_.erase_edge(hovered_link_id);
+            const ImVec2 left_drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            constexpr float click_drag_threshold = 4.0f;
+            const bool is_click_not_drag =
+                fabsf(left_drag_delta.x) < click_drag_threshold &&
+                fabsf(left_drag_delta.y) < click_drag_threshold;
+
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && is_click_not_drag)
+            {
+                graph_.erase_edge(hovered_link_id);
+            }
         }
     }
 
