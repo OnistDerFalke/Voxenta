@@ -68,6 +68,7 @@ private:
     float current_time_seconds = 0.f;
 
     bool initialized_ = false;
+    bool view_centered_ = false;
     int input_node_id_ = -1;
     int output_node_id_ = -1;
     cv::Mat input_image_;

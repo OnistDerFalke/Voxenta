@@ -182,6 +182,28 @@ void node_editor::show()
                 output_node_id_ = add_node(*img_out, ImVec2(500, 200));
             initialized_ = true;
         }
+        else if (!view_centered_ && input_node_id_ != -1 && output_node_id_ != -1)
+        {
+            const ImVec2 canvas_size = ImGui::GetWindowSize();
+
+            const ImVec2 in_pos = ImNodes::GetNodeGridSpacePos(input_node_id_);
+            const ImVec2 in_size = ImNodes::GetNodeDimensions(input_node_id_);
+            const ImVec2 in_center(in_pos.x + in_size.x * 0.5f, in_pos.y + in_size.y * 0.5f);
+
+            const ImVec2 out_pos = ImNodes::GetNodeGridSpacePos(output_node_id_);
+            const ImVec2 out_size = ImNodes::GetNodeDimensions(output_node_id_);
+            const ImVec2 out_center(out_pos.x + out_size.x * 0.5f, out_pos.y + out_size.y * 0.5f);
+
+            const ImVec2 midpoint(
+                (in_center.x + out_center.x) * 0.5f,
+                (in_center.y + out_center.y) * 0.5f);
+
+            ImNodes::EditorContextResetPanning(ImVec2(
+                canvas_size.x * 0.5f - midpoint.x,
+                canvas_size.y * 0.5f - midpoint.y));
+
+            view_centered_ = true;
+        }
     }
 
     for (auto& node : ui_nodes_) {
@@ -245,7 +267,16 @@ void node_editor::show()
             const ImVec2 box_pos = ImGui::GetCursorScreenPos();
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-            draw_list->AddRectFilled(box_pos, ImVec2(box_pos.x + box_w, box_pos.y + box_h), IM_COL32(25, 25, 25, 255), 4.0f);
+            ImU32 box_color;
+            if (preview.empty()) {
+                box_color = IM_COL32(25, 25, 25, 255);
+            }
+            else if (ImNodes::IsNodeSelected(node.node_id)) {
+                box_color = ImNodes::GetStyle().Colors[ImNodesCol_NodeBackgroundSelected];
+            }
+            else {
+                box_color = ImNodes::GetStyle().Colors[ImNodesCol_NodeBackground];
+            }
 
             if (!preview.empty() && node.thumbnail_texture != nullptr && node.thumbnail_tex_w > 0) {
                 const float img_aspect = static_cast<float>(node.thumbnail_tex_w) / static_cast<float>(node.thumbnail_tex_h);
@@ -398,7 +429,7 @@ void node_editor::show()
 
     {
         const int num_selected = ImNodes::NumSelectedLinks();
-        if (num_selected > 0 && ImGui::IsKeyReleased(ImGuiKey_X))
+        if (num_selected > 0 && ImGui::IsKeyReleased(ImGuiKey_Delete))
         {
             static std::vector<int> selected_links;
             selected_links.resize(static_cast<size_t>(num_selected));
@@ -410,7 +441,7 @@ void node_editor::show()
 
     {
         const int num_selected = ImNodes::NumSelectedNodes();
-        if (num_selected > 0 && ImGui::IsKeyReleased(ImGuiKey_X))
+        if (num_selected > 0 && ImGui::IsKeyReleased(ImGuiKey_Delete))
         {
             selected_nodes_.resize(static_cast<size_t>(num_selected));
             ImNodes::GetSelectedNodes(selected_nodes_.data());
@@ -549,8 +580,10 @@ void node_editor::evaluate_and_show_output()
     last_output_ = cv::Mat();
 
     ui_node* input_node = nullptr;
-    if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node))
+    if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node)) {
         input_node->fx->set_external_image(input_image_);
+        input_node->fx->set_external_extension(input_extension_);
+    }
 
     std::unordered_map<int, std::vector<pin_value>> cache;
 
@@ -559,11 +592,9 @@ void node_editor::evaluate_and_show_output()
 
     if (output_node_id_ != -1)
     {
-        ui_node* input_node = nullptr;
-        if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node)) {
-            input_node->fx->set_external_image(input_image_);
-            input_node->fx->set_external_extension(input_extension_);
-        }
+        ui_node* output_node = nullptr;
+        if (find_ui_node(output_node_id_, &output_node))
+            last_output_ = output_node->fx->get_preview_image();
     }
 }
 

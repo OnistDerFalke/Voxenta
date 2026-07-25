@@ -1,6 +1,4 @@
 ﻿#include "voxenta/windows/main_window.h"
-#include "voxenta/windows/input_img_window.h"
-#include "voxenta/windows/output_img_window.h"
 #include "voxenta/windows/properties_window.h"
 #include "voxenta/windows/win_prop.h"
 
@@ -158,8 +156,6 @@ main_window::main_window() {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     //Creating sub-windows in main window
-    auto inputWindow = input_img_window(get_window_size(window));
-    auto outputWindow = output_img_window(get_window_size(window));
     auto propertiesWindow = properties_window(get_window_size(window));
 
     //Main loop
@@ -172,9 +168,7 @@ main_window::main_window() {
         ImGui::NewFrame();
 
         //Resizing windows on update
-        if(window_resized(window)) {
-            inputWindow.set_mws(get_window_size(window));
-            outputWindow.set_mws(get_window_size(window));
+        if (window_resized(window)) {
             propertiesWindow.set_mws(get_window_size(window));
         }
 
@@ -183,8 +177,6 @@ main_window::main_window() {
         latest_maximize_flag = win_prop::window_resized;
 
         //Showing updated windows
-        inputWindow.show(propertiesWindow.get_base_image(), propertiesWindow.just_uploaded);
-        outputWindow.show(propertiesWindow.get_modified_image(), propertiesWindow.just_updated);
         propertiesWindow.show();
 
         //Rendering

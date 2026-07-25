@@ -15,9 +15,8 @@ properties_window::properties_window(ImVec2 mws)
 
     this->editor = node_editor();
 
-    this->current_effect_idx = 0;
-
     this->shortcut_active.resize(Shortcuts::NUM_SHORTCUTS);
+
     this->last_load_path = std::filesystem::current_path();
     this->last_save_path = std::filesystem::current_path();
 
@@ -32,59 +31,28 @@ void properties_window::show() {
     editor.set_input_image(base_image);
     editor.set_input_extension(last_load_path.extension().string());
 
-    // Toggle node editor fullscreen with F11
-    if (ImGui::IsKeyPressed(ImGuiKey_F11)) {
-        toggle_node_editor_fullscreen();
-    }
+    //Node editor covers the entire application window - this is now the only view
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+    ImGui::SetNextWindowSize(mws);
 
-    //To be sure that nothing will be drawn over fullscreen editor grid
-    //Also adds possibility not to block right click on fullscreen editor
-    if (node_editor_fullscreen && !node_editor_fullscreen_prev_) {
-        ImGui::SetWindowFocus(" Properties");
-    }
-    node_editor_fullscreen_prev_ = node_editor_fullscreen;
-
-    //Setting new position and size
-    auto border = mws.x * 0.005f;
-    ImVec2 input_window_pos;
-    ImVec2 input_window_size;
-
-    if (node_editor_fullscreen) {
-        // Cover the whole application window with node editor
-        input_window_pos = ImVec2(0.0f, 0.0f);
-        input_window_size = mws;
-    }
-    else {
-        input_window_pos = ImVec2(border, mws.y * 2 / 3);
-        input_window_size = ImVec2(mws.x - 2 * border, (mws.y - 3 * border) * 1 / 3);
-    }
-
-    ImGui::SetNextWindowPos(input_window_pos);
-    ImGui::SetNextWindowSize(input_window_size);
-
-    //Context
-    ImGui::Begin(" Properties", nullptr,
+    ImGui::Begin("Voxenta", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar);
+        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_MenuBar);
 
-    //Handle shortcuts events
     handle_shortcuts();
 
-    if (node_editor_fullscreen) {
-        // Node editor takes up the entire window
-        // explorer panel is hidden while fullscreen
-        show_node_editor(ImGui::GetContentRegionAvail());
-    }
-    else {
-        //Sizes for context children
-        auto node_editor_size = ImVec2(0.75f * ImGui::GetContentRegionAvail().x, 0.0f);
+    show_menu_bar();
 
-        //Show window context
-        show_menu_bar();
-        show_node_editor(node_editor_size);
-        ImGui::SameLine();
-        auto node_explorer_size = ImGui::GetContentRegionAvail();
-        show_node_explorer(node_explorer_size);
+    show_node_editor(ImGui::GetContentRegionAvail());
+
+    if (pending_save_) {
+        file_save();
+        pending_save_ = false;
+    }
+    if (pending_apply_) {
+        apply_effect();
+        pending_apply_ = false;
     }
 
     ImGui::End();
@@ -107,15 +75,13 @@ cv::Mat properties_window::get_modified_image() {
     return modified_image;
 }
 
-
-
 /* Loads available effects*/
 void properties_window::reload_effects() {
-    current_effect_idx = std::clamp(this->current_effect_idx,
-        static_cast<size_t>(0),
-        effect_manager::effects().size() - 1);
     this->just_updated = true;
 }
+
+void properties_window::request_save() { pending_save_ = true; }
+void properties_window::request_apply() { pending_apply_ = true; }
 
 /* Applies effect to the image */
 void properties_window::apply_effect() {
@@ -225,11 +191,11 @@ void properties_window::set_shortcuts() {
     this->shortcut_keys.resize(Shortcuts::NUM_SHORTCUTS);
 
     this->shortcut_methods[Shortcuts::LOAD] = &properties_window::file_load;
-    this->shortcut_methods[Shortcuts::SAVE] = &properties_window::file_save;
+    this->shortcut_methods[Shortcuts::SAVE] = &properties_window::request_save;
 #if defined(VOXENTA_EFFECTS_HOT_RELOAD)
     this->shortcut_methods[Shortcuts::RELOAD_EFFECTS] = &properties_window::reload_effects;
 #endif
-    this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::apply_effect;
+    this->shortcut_methods[Shortcuts::APPLY_EFFECT] = &properties_window::request_apply;
     this->shortcut_methods[Shortcuts::UNDO_EFFECT] = &properties_window::undo_effect;
 
     this->shortcut_keys[Shortcuts::LOAD] = ImGui::GetKeyIndex(ImGuiKey_O);
@@ -245,29 +211,14 @@ void properties_window::set_shortcuts() {
 
 /* Shows menu bar on the top of properties context */
 void properties_window::show_menu_bar() {
-    //Main menu, focused windows preparation
     ImGui::BeginMenuBar();
+    ImGui::SetWindowFontScale(0.8f);
+
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Load", "Ctrl+O"))
             file_load();
         if (ImGui::MenuItem("Save", "Ctrl+S"))
-            file_save();
-        ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Effects")) {
-        if (ImGui::MenuItem("Apply", "Ctrl+A"))
-            apply_effect();
-        if (ImGui::MenuItem("Undo", "Ctrl+Z"))
-            undo_effect();
-#if defined(VOXENTA_EFFECTS_HOT_RELOAD)
-        if (ImGui::MenuItem("Reload effects", "Ctrl+R"))
-            reload_effects();
-#endif
-        ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("View")) {
-        if (ImGui::MenuItem("Toggle node editor fullscreen", "F11", node_editor_fullscreen))
-            toggle_node_editor_fullscreen();
+            request_save();
         ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Minimap"))
@@ -292,6 +243,7 @@ void properties_window::show_menu_bar() {
         }
         ImGui::EndMenu();
     }
+    ImGui::SetWindowFontScale(1.0f);
     ImGui::EndMenuBar();
 
     about.show(&m_about_dialog_open, mws);
@@ -300,82 +252,12 @@ void properties_window::show_menu_bar() {
 /* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
     ImGui::BeginChild("editor", size, true);
-
-    const ImVec2 child_screen_pos = ImGui::GetCursorScreenPos();
     editor.show();
-
-    ImGui::SetCursorScreenPos(ImVec2(child_screen_pos.x + 8.0f, child_screen_pos.y + 8.0f));
-    if (ImGui::Button(node_editor_fullscreen ? "Minimize (F11)" : "Fullscreen (F11)")) {
-        toggle_node_editor_fullscreen();
-    }
-
     ImGui::EndChild();
-}
-
-/* Toggles the node editor between its normal size and covering the whole application window */
-void properties_window::toggle_node_editor_fullscreen() {
-    node_editor_fullscreen = !node_editor_fullscreen;
-}
-
-/* Shows node explorer as a children of properties context */
-void properties_window::show_node_explorer(ImVec2 size) {
-    static std::vector<std::reference_wrapper<effect>> simple_effects;
-    simple_effects.clear();
-    for (auto& fx : effect_manager::effects()) {
-        const auto in = fx.get().inputs();
-        const auto out = fx.get().outputs();
-        if (in.size() == 1 && in[0].type == pin_type::image &&
-            out.size() == 1 && out[0].type == pin_type::image) {
-            simple_effects.push_back(fx);
-        }
-    }
-    if (current_effect_idx >= simple_effects.size())
-        current_effect_idx = 0;
-
-    ImGui::BeginChild("properties", size, true);
-
-    const char* current_label = use_complex_effect_
-        ? "Complex Effect"
-        : simple_effects[current_effect_idx].get().get_name();
-
-    if (ImGui::BeginCombo("##effect_combo", current_label)) {
-        if (ImGui::Selectable("Complex Effect", use_complex_effect_)) {
-            use_complex_effect_ = true;
-            just_updated = true;
-        }
-        for (size_t n = 0; n < simple_effects.size(); n++) {
-            const bool is_selected = !use_complex_effect_ && (current_effect_idx == n);
-            if (ImGui::Selectable(simple_effects[n].get().get_name(), is_selected)) {
-                use_complex_effect_ = false;
-                just_updated = true;
-                current_effect_idx = n;
-            }
-            if (is_selected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-
-    if (use_complex_effect_) {
-        ImGui::TextWrapped("Controlled by the node graph. Connect an effect chain "
-            "between \"Image Input\" and \"Image Output\".");
-    }
-    else {
-        ImGui::Text("Effect properties:");
-        ImGui::Dummy(ImVec2(0, 5));
-        just_updated = just_updated || simple_effects[current_effect_idx].get().run_ui();
-    }
 
     if (!base_image.empty()) {
-        if (use_complex_effect_) {
-            cv::Mat graph_output = editor.get_output();
-            modified_image = graph_output.empty() ? base_image : graph_output;
-            just_updated = true;
-        }
-        else if (just_updated || modified_image.empty()) {
-            modified_image = simple_effects[current_effect_idx].get().run({ pin_value::make_image(base_image) })[0].image;
-        }
+        cv::Mat graph_output = editor.get_output();
+        modified_image = graph_output.empty() ? base_image : graph_output;
+        just_updated = true;
     }
-
-    ImGui::EndChild();
 }

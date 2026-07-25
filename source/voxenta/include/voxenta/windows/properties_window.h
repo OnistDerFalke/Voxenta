@@ -44,8 +44,6 @@ private:
     cv::Mat base_image;
     cv::Mat modified_image;
     std::stack<cv::Mat> history;
-    size_t current_effect_idx;
-    bool use_complex_effect_ = false;
     std::vector<bool> shortcut_active;
     std::vector<void (properties_window::*) ()> shortcut_methods;
     std::vector<ImGuiKey> shortcut_keys;
@@ -55,6 +53,11 @@ private:
     void reload_effects();
     void apply_effect();
     void undo_effect();
+    void request_save();
+    void request_apply();
+
+    bool pending_save_ = false;
+    bool pending_apply_ = false;
 
     void handle_shortcuts();
     void set_shortcuts();
@@ -62,11 +65,6 @@ private:
 
     void show_menu_bar();
     void show_node_editor(ImVec2 size);
-    void show_node_explorer(ImVec2 size);
-
-    bool node_editor_fullscreen{};
-    bool node_editor_fullscreen_prev_{};
-    void toggle_node_editor_fullscreen();
 };
 
 #endif
