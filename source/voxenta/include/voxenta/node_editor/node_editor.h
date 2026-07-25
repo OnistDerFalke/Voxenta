@@ -30,6 +30,11 @@ private:
         std::vector<int> input_attr_ids;
         std::vector<int> output_attr_ids;
 
+        std::string custom_name;
+        bool renaming = false;
+        bool focus_rename = false;
+        char rename_buf[128] = {};
+
         void* thumbnail_texture = nullptr;
         int   thumbnail_tex_w = 0;
         int   thumbnail_tex_h = 0;

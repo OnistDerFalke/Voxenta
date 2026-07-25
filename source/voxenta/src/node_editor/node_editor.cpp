@@ -209,8 +209,42 @@ void node_editor::show()
     for (auto& node : ui_nodes_) {
         ImNodes::BeginNode(node.node_id);
 
+        const std::string display_name = node.custom_name.empty() ? node.fx->get_name() : node.custom_name;
+
         ImNodes::BeginNodeTitleBar();
-        ImGui::TextUnformatted(node.fx->get_name());
+        {
+
+            if (node.renaming) {
+                if (node.focus_rename) {
+                    ImGui::SetKeyboardFocusHere();
+                    node.focus_rename = false;
+                }
+
+                ImGui::SetNextItemWidth(kNodeContentWidth * ui_scale_);
+                const bool confirmed = ImGui::InputText("##rename", node.rename_buf, IM_ARRAYSIZE(node.rename_buf),
+                    ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+                const bool cancelled = ImGui::IsKeyPressed(ImGuiKey_Escape);
+                const bool clicked_away = ImGui::IsItemDeactivatedAfterEdit() == false && ImGui::IsItemDeactivated();
+
+                if (confirmed || clicked_away) {
+                    node.custom_name = node.rename_buf;
+                    node.renaming = false;
+                }
+                if (cancelled) {
+                    node.renaming = false;
+                }
+            }
+            else {
+                ImGui::TextUnformatted(display_name.c_str());
+                if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                    node.renaming = true;
+                    node.focus_rename = true;
+                    std::strncpy(node.rename_buf, display_name.c_str(), IM_ARRAYSIZE(node.rename_buf) - 1);
+                    node.rename_buf[IM_ARRAYSIZE(node.rename_buf) - 1] = '\0';
+                }
+            }
+        }
         ImNodes::EndNodeTitleBar();
 
         const auto in_pins = node.fx->inputs();
@@ -219,6 +253,7 @@ void node_editor::show()
         float content_width = kNodeContentWidth * ui_scale_;
         for (const auto& p : in_pins)  content_width = std::max(content_width, ImGui::CalcTextSize(p.name).x);
         for (const auto& p : out_pins) content_width = std::max(content_width, ImGui::CalcTextSize(p.name).x);
+        content_width = std::max(content_width, ImGui::CalcTextSize(display_name.c_str()).x);
         const float scaled_content_width = content_width;
 
         for (size_t i = 0; i < node.input_attr_ids.size(); ++i) {
