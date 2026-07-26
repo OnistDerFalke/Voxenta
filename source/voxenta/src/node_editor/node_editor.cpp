@@ -10,6 +10,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
+#include <imgui_internal.h>
 
 namespace {
     constexpr float kNodeContentWidth = 140.0f;
@@ -299,7 +300,20 @@ void node_editor::show()
                 draw_list->AddImage(node.thumbnail_texture, img_pos, ImVec2(img_pos.x + draw_w, img_pos.y + draw_h));
             }
 
-            ImGui::Dummy(ImVec2(box_w, box_h));
+            ImGui::SetCursorScreenPos(box_pos);
+            const std::string thumb_id = "##thumb" + std::to_string(node.node_id);
+            const bool thumb_clicked = ImGui::InvisibleButton(thumb_id.c_str(), ImVec2(box_w, box_h));
+
+            if (!preview.empty()) {
+                if (ImGui::IsItemHovered())
+                    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                if (thumb_clicked) {
+                    viewer_open_ = true;
+                    viewer_node_id_ = node.node_id;
+                    viewer_fit_pending_ = true;
+                }
+            }
+
             ImGui::Spacing();
 
             const std::string size_label = "Size: " + effect::describe_resolution(preview);
@@ -459,6 +473,7 @@ void node_editor::show()
 
     ImGui::EndChild();
 
+    show_image_viewer();
     evaluate_graph();
 }
 
@@ -539,6 +554,213 @@ void node_editor::update_node_thumbnail(ui_node& node)
     node.thumbnail_tex_w = rgb.cols;
     node.thumbnail_tex_h = rgb.rows;
 }
+
+void node_editor::update_viewer_texture(const cv::Mat& img)
+{
+    if (img.empty())
+        return;
+
+    constexpr int kMaxViewerDim = 2048;
+    cv::Mat resized;
+    if (img.cols > kMaxViewerDim || img.rows > kMaxViewerDim) {
+        if (img.cols >= img.rows) {
+            const int w = kMaxViewerDim;
+            const int h = std::max(1, static_cast<int>(static_cast<float>(img.rows) * w / img.cols));
+            cv::resize(img, resized, cv::Size(w, h));
+        }
+        else {
+            const int h = kMaxViewerDim;
+            const int w = std::max(1, static_cast<int>(static_cast<float>(img.cols) * h / img.rows));
+            cv::resize(img, resized, cv::Size(w, h));
+        }
+    }
+    else {
+        resized = img;
+    }
+
+    cv::Mat rgb;
+    if (resized.channels() == 1)
+        cv::cvtColor(resized, rgb, cv::COLOR_GRAY2RGB);
+    else
+        cv::cvtColor(resized, rgb, cv::COLOR_BGR2RGB);
+
+    GLuint texture;
+    if (viewer_texture_ == nullptr) {
+        glGenTextures(1, &texture);
+        viewer_texture_ = reinterpret_cast<void*>(static_cast<intptr_t>(texture));
+    }
+    else {
+        texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(viewer_texture_));
+    }
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rgb.cols, rgb.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, rgb.ptr());
+
+    viewer_tex_w_ = rgb.cols;
+    viewer_tex_h_ = rgb.rows;
+}
+
+void node_editor::show_image_viewer()
+{
+    if (viewer_open_) {
+        ImGui::OpenPopup("Image Viewer");
+        viewer_open_ = false;
+    }
+
+    ui_node* node = nullptr;
+    if (viewer_node_id_ == -1 || !find_ui_node(viewer_node_id_, &node))
+        return;
+
+    const cv::Mat preview = node->fx->get_preview_image();
+    update_viewer_texture(preview);
+
+    const ImVec2 display_size = ImGui::GetIO().DisplaySize;
+    const ImVec2 viewer_size(display_size.x * 0.68f, display_size.y * 0.78f);
+    ImGui::SetNextWindowPos(ImVec2(
+        (display_size.x - viewer_size.x) * 0.5f,
+        (display_size.y - viewer_size.y) * 0.5f));
+    ImGui::SetNextWindowSize(viewer_size);
+
+    bool close_requested = false;
+    if (ImGui::BeginPopupModal("Image Viewer", nullptr,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
+
+        ImGui::SetWindowFontScale(0.8f);
+        ImGui::TextUnformatted("Image Viewer");
+
+        {
+            const float radius = ImGui::GetFontSize() * 0.5f + 2.0f;
+            const float diameter = radius * 2.0f;
+            ImGui::SameLine(ImGui::GetWindowWidth() - diameter - 8.0f);
+
+            const ImVec2 top_left = ImGui::GetCursorScreenPos();
+            const ImVec2 center(top_left.x + radius, top_left.y + radius);
+
+            ImGui::InvisibleButton("##viewer_close", ImVec2(diameter, diameter));
+            const bool hovered = ImGui::IsItemHovered();
+            const bool active = ImGui::IsItemActive();
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            if (hovered) {
+                const ImU32 bg = ImGui::GetColorU32(active ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered);
+                draw_list->AddCircleFilled(center, radius, bg, 16);
+            }
+
+            const float cross = radius * 0.5f;
+            const ImU32 cross_col = ImGui::GetColorU32(ImGuiCol_Text);
+            draw_list->AddLine(ImVec2(center.x - cross, center.y - cross), ImVec2(center.x + cross, center.y + cross), cross_col, 1.5f);
+            draw_list->AddLine(ImVec2(center.x - cross, center.y + cross), ImVec2(center.x + cross, center.y - cross), cross_col, 1.5f);
+
+            if (ImGui::IsItemClicked())
+                close_requested = true;
+        }
+
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+        if (preview.empty() || viewer_texture_ == nullptr) {
+            ImGui::TextDisabled("No image");
+        }
+        else {
+            ImGui::BeginChild("viewer_canvas", ImVec2(0, 0), false,
+                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+            const ImVec2 canvas_size = ImGui::GetWindowSize();
+            const ImVec2 canvas_window_pos = ImGui::GetWindowPos();
+
+            if (ImGui::IsWindowHovered()) {
+                const float wheel = ImGui::GetIO().MouseWheel;
+                if (wheel != 0.0f && viewer_tex_w_ > 0 && viewer_tex_h_ > 0) {
+                    const float old_zoom = viewer_zoom_;
+                    const float new_zoom = std::clamp(old_zoom + wheel * 0.1f, 0.1f, 10.0f);
+
+                    if (new_zoom != old_zoom) {
+                        const ImVec2 mouse_local(
+                            ImGui::GetMousePos().x - canvas_window_pos.x,
+                            ImGui::GetMousePos().y - canvas_window_pos.y);
+
+                        const ImVec2 old_center(canvas_size.x * 0.5f + viewer_pan_.x, canvas_size.y * 0.5f + viewer_pan_.y);
+                        const float old_draw_w = static_cast<float>(viewer_tex_w_) * old_zoom;
+                        const float old_draw_h = static_cast<float>(viewer_tex_h_) * old_zoom;
+                        const ImVec2 old_top_left(old_center.x - old_draw_w * 0.5f, old_center.y - old_draw_h * 0.5f);
+
+                        const ImVec2 img_pixel(
+                            (mouse_local.x - old_top_left.x) / old_zoom,
+                            (mouse_local.y - old_top_left.y) / old_zoom);
+
+                        const ImVec2 new_top_left(
+                            mouse_local.x - img_pixel.x * new_zoom,
+                            mouse_local.y - img_pixel.y * new_zoom);
+
+                        const float new_draw_w = static_cast<float>(viewer_tex_w_) * new_zoom;
+                        const float new_draw_h = static_cast<float>(viewer_tex_h_) * new_zoom;
+                        const ImVec2 new_center(new_top_left.x + new_draw_w * 0.5f, new_top_left.y + new_draw_h * 0.5f);
+
+                        viewer_pan_ = ImVec2(new_center.x - canvas_size.x * 0.5f, new_center.y - canvas_size.y * 0.5f);
+                        viewer_zoom_ = new_zoom;
+                    }
+                }
+            }
+
+            ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
+            ImGui::SetNextItemAllowOverlap();
+            ImGui::InvisibleButton("##viewer_drag", canvas_size,
+                ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
+
+            if (ImGui::IsItemActive() &&
+                (ImGui::IsMouseDragging(ImGuiMouseButton_Left) || ImGui::IsMouseDragging(ImGuiMouseButton_Right))) {
+                const ImVec2 delta = ImGui::GetIO().MouseDelta;
+                viewer_pan_.x += delta.x;
+                viewer_pan_.y += delta.y;
+            }
+
+            if (viewer_fit_pending_ && viewer_tex_w_ > 0 && viewer_tex_h_ > 0) {
+                viewer_zoom_ = std::min(
+                    canvas_size.x / static_cast<float>(viewer_tex_w_),
+                    canvas_size.y / static_cast<float>(viewer_tex_h_));
+                viewer_pan_ = ImVec2(0.0f, 0.0f);
+                viewer_fit_pending_ = false;
+            }
+
+            const float draw_w = static_cast<float>(viewer_tex_w_) * viewer_zoom_;
+            const float draw_h = static_cast<float>(viewer_tex_h_) * viewer_zoom_;
+
+            const ImVec2 center(canvas_size.x * 0.5f + viewer_pan_.x, canvas_size.y * 0.5f + viewer_pan_.y);
+            const ImVec2 top_left(center.x - draw_w * 0.5f, center.y - draw_h * 0.5f);
+            const ImVec2 window_pos = ImGui::GetWindowPos();
+
+            ImGui::GetWindowDrawList()->AddImage(viewer_texture_,
+                ImVec2(window_pos.x + top_left.x, window_pos.y + top_left.y),
+                ImVec2(window_pos.x + top_left.x + draw_w, window_pos.y + top_left.y + draw_h));
+
+            const ImVec2 recenter_size(80.0f, 0.0f);
+            ImGui::SetCursorScreenPos(ImVec2(
+                window_pos.x + canvas_size.x - recenter_size.x - 12.0f,
+                window_pos.y + canvas_size.y - ImGui::GetFrameHeight() - 12.0f));
+            ImGui::SetWindowFontScale(0.75f);
+            const bool recenter_clicked = ImGui::Button("Recenter", recenter_size);
+            ImGui::SetWindowFontScale(1.0f);
+            if (recenter_clicked) {
+                viewer_fit_pending_ = true;
+            }
+
+            ImGui::EndChild();
+        }
+
+        if (close_requested)
+            ImGui::CloseCurrentPopup();
+
+        ImGui::EndPopup();
+    }
+    else {
+        viewer_node_id_ = -1;
+    }
+}
+
 
 void node_editor::update_downstream_ranges()
 {
