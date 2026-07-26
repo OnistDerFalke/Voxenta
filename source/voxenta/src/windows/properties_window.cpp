@@ -23,15 +23,10 @@ properties_window::properties_window(ImVec2 mws)
     set_shortcuts();
 }
 
-/* Shows the properties window and it's context */
 void properties_window::show() {
-    just_uploaded = false; //Image was loaded event
-    just_updated = false; //Image changed (effect changed or was modified) event
-
-    editor.set_input_image(base_image);
-    editor.set_input_extension(last_load_path.extension().string());
-
-    //Node editor covers the entire application window - this is now the only view
+    just_uploaded = false; 
+    just_updated = false; 
+    
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(mws);
 
@@ -85,85 +80,23 @@ void properties_window::request_apply() { pending_apply_ = true; }
 
 /* Applies effect to the image */
 void properties_window::apply_effect() {
-    history.push(base_image.clone());
-    base_image = modified_image.clone();
-    just_updated = true;
-    just_uploaded = true;
+
 }
 
 /* Undo latest effect of the image */
 void properties_window::undo_effect() {
-    if(!history.empty()) {
-        base_image = history.top().clone();
-        history.pop();
-        just_updated = true;
-        just_uploaded = true;
-    }
+
 }
 
 /* Handles loading the image */
 void properties_window::file_load() {
-    NFD::UniquePathU8 outPath;
-
-    //No need to differentiate between image formats
-    constexpr nfdfilteritem_t filters[1] = {
-            { "Images", "jpg,jpeg,jfif,png" }
-    };
-
-    nfdresult_t result = NFD::OpenDialog(
-        outPath,
-        filters,
-        IM_ARRAYSIZE(filters),
-        last_load_path.parent_path().generic_string().c_str());
-
-    if (result == NFD_OKAY && outPath != nullptr) {
-        just_uploaded = true;
-        just_updated = true;
-        std::stack<cv::Mat>().swap(history);
-        base_image = cv::imread(outPath.get());
-
-        //Image loaded successfully
-        if (base_image.data != nullptr) {
-            last_load_path = outPath.get();
-        }
-        else {
-            fprintf(stderr, "invalid file format\n");
-        }
-    }
-    else if (result == NFD_ERROR) {
-        fprintf(stderr, "nfd error: %s\n", NFD::GetError());
-    }
+   
 }
 
 /* Handles saving the image */
 void properties_window::file_save() {
-    if (!modified_image.empty()) {
-        NFD::UniquePathU8 outPath;
-
-        //Prefer lossless image formats
-        constexpr nfdfilteritem_t filters[2] = {
-                { "PNG Image", "png" },
-                { "JPEG Image", "jpg,jpeg,jfif" }
-        };
-
-        nfdresult_t result = NFD::SaveDialog(
-            outPath,
-            filters,
-            IM_ARRAYSIZE(filters),
-            last_save_path.parent_path().generic_string().c_str(),
-            !is_directory(last_load_path) ? (last_load_path.stem().string() + "_out" + last_load_path.extension().string()).c_str() : nullptr);
-
-        if (result == NFD_OKAY && outPath != nullptr) {
-            cv::imwrite(outPath.get(), modified_image);
-            last_save_path = outPath.get();
-        }
-        else if (result == NFD_ERROR) {
-            fprintf(stderr, "nfd error: %s\n", NFD::GetError());
-        }
-    }
+   
 }
-
-
 
 /* Checks if event was started */
 bool properties_window::shortcut_event(properties_window::Shortcuts shortcut) {
@@ -249,15 +182,8 @@ void properties_window::show_menu_bar() {
     about.show(&m_about_dialog_open, mws);
 }
 
-/* Shows node editor as a children of properties context */
 void properties_window::show_node_editor(ImVec2 size) {
     ImGui::BeginChild("editor", size, true);
     editor.show();
     ImGui::EndChild();
-
-    if (!base_image.empty()) {
-        cv::Mat graph_output = editor.get_output();
-        modified_image = graph_output.empty() ? base_image : graph_output;
-        just_updated = true;
-    }
 }

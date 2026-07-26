@@ -19,10 +19,6 @@ public:
     void set_minimap_location(ImNodesMiniMapLocation location);
     ImNodesMiniMapLocation get_minimap_location() const;
 
-    void set_input_image(cv::Mat image);
-    void set_input_extension(std::string extension);
-    cv::Mat get_output() const;
-
 private:
     struct ui_node {
         int node_id;
@@ -56,7 +52,7 @@ private:
     effect* find_catalog_effect(const char* name);
 
     std::vector<pin_value> evaluate_node(int node_id, std::unordered_map<int, std::vector<pin_value>>& cache);
-    void evaluate_and_show_output();
+    void evaluate_graph();
     void update_downstream_ranges();
 
     graphs::Graph<int> graph_;
@@ -71,14 +67,6 @@ private:
     float ui_scale_ = 1.0f;
     ImNodesStyle base_style_;
     float current_time_seconds = 0.f;
-
-    bool initialized_ = false;
-    bool view_centered_ = false;
-    int input_node_id_ = -1;
-    int output_node_id_ = -1;
-    cv::Mat input_image_;
-    std::string input_extension_;
-    cv::Mat last_output_;
 };
 
 #endif

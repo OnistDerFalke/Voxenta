@@ -75,9 +75,6 @@ int node_editor::add_node(effect& fx, ImVec2 screen_pos)
 
 void node_editor::remove_node(int node_id)
 {
-    if (node_id == input_node_id_ || node_id == output_node_id_)
-        return;
-
     auto iter = std::find_if(ui_nodes_.begin(), ui_nodes_.end(),
         [node_id](const ui_node& n) { return n.node_id == node_id; });
     if (iter == ui_nodes_.end())
@@ -175,36 +172,6 @@ void node_editor::show()
     }
 
     {
-        if (!initialized_)
-        {
-            if (effect* img_in = find_catalog_effect("Image Input"))
-                input_node_id_ = add_node(*img_in, ImVec2(60, 200));
-            if (effect* img_out = find_catalog_effect("Image Output"))
-                output_node_id_ = add_node(*img_out, ImVec2(500, 200));
-            initialized_ = true;
-        }
-        else if (!view_centered_ && input_node_id_ != -1 && output_node_id_ != -1)
-        {
-            const ImVec2 canvas_size = ImGui::GetWindowSize();
-
-            const ImVec2 in_pos = ImNodes::GetNodeGridSpacePos(input_node_id_);
-            const ImVec2 in_size = ImNodes::GetNodeDimensions(input_node_id_);
-            const ImVec2 in_center(in_pos.x + in_size.x * 0.5f, in_pos.y + in_size.y * 0.5f);
-
-            const ImVec2 out_pos = ImNodes::GetNodeGridSpacePos(output_node_id_);
-            const ImVec2 out_size = ImNodes::GetNodeDimensions(output_node_id_);
-            const ImVec2 out_center(out_pos.x + out_size.x * 0.5f, out_pos.y + out_size.y * 0.5f);
-
-            const ImVec2 midpoint(
-                (in_center.x + out_center.x) * 0.5f,
-                (in_center.y + out_center.y) * 0.5f);
-
-            ImNodes::EditorContextResetPanning(ImVec2(
-                canvas_size.x * 0.5f - midpoint.x,
-                canvas_size.y * 0.5f - midpoint.y));
-
-            view_centered_ = true;
-        }
     }
 
     for (auto& node : ui_nodes_) {
@@ -338,10 +305,9 @@ void node_editor::show()
             const std::string size_label = "Size: " + effect::describe_resolution(preview);
             draw_small_label(box_w, size_label.c_str());
 
-            if (node.node_id == input_node_id_) {
-                const std::string ext = node.fx->get_source_extension();
-                const std::string ext_label = "Extension: " + (ext.empty() ? std::string("-") : ext);
-                draw_small_label(box_w, ext_label.c_str());
+            const std::string ext = node.fx->get_source_extension();
+            if (!ext.empty()) {
+                draw_small_label(box_w, ("Extension: " + ext).c_str());
             }
 
             if (center_indent > 0.0f) ImGui::Unindent(center_indent);
@@ -407,14 +373,7 @@ void node_editor::show()
 
         if (ImGui::BeginPopup("node context"))
         {
-            const bool is_mandatory = (hovered_node_id_ == input_node_id_ || hovered_node_id_ == output_node_id_);
-
-            if (is_mandatory) {
-                ImGui::BeginDisabled();
-                ImGui::MenuItem("Delete");
-                ImGui::EndDisabled();
-            }
-            else if (ImGui::MenuItem("Delete")) {
+            if (ImGui::MenuItem("Delete")) {
                 remove_node(hovered_node_id_);
             }
 
@@ -500,7 +459,7 @@ void node_editor::show()
 
     ImGui::EndChild();
 
-    evaluate_and_show_output();
+    evaluate_graph();
 }
 
 std::vector<pin_value> node_editor::evaluate_node(int node_id, std::unordered_map<int, std::vector<pin_value>>& cache)
@@ -621,42 +580,12 @@ void node_editor::update_downstream_ranges()
     }
 }
 
-void node_editor::evaluate_and_show_output()
+void node_editor::evaluate_graph()
 {
-    last_output_ = cv::Mat();
-
-    ui_node* input_node = nullptr;
-    if (input_node_id_ != -1 && find_ui_node(input_node_id_, &input_node)) {
-        input_node->fx->set_external_image(input_image_);
-        input_node->fx->set_external_extension(input_extension_);
-    }
-
     std::unordered_map<int, std::vector<pin_value>> cache;
 
     for (const auto& node : ui_nodes_)
         evaluate_node(node.node_id, cache);
-
-    if (output_node_id_ != -1)
-    {
-        ui_node* output_node = nullptr;
-        if (find_ui_node(output_node_id_, &output_node))
-            last_output_ = output_node->fx->get_preview_image();
-    }
-}
-
-void node_editor::set_input_image(cv::Mat image)
-{
-    input_image_ = std::move(image);
-}
-
-void node_editor::set_input_extension(std::string extension)
-{
-    input_extension_ = std::move(extension);
-}
-
-cv::Mat node_editor::get_output() const
-{
-    return last_output_;
 }
 
 void node_editor::set_minimap_location(ImNodesMiniMapLocation location) {
