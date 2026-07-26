@@ -4,7 +4,6 @@
 
 about_window::about_window() = default;
 
-/* Shows the about-window */
 void about_window::show(bool* open, ImVec2 mws) {
     if (*open) {
         ImGui::OpenPopup("About Voxenta");

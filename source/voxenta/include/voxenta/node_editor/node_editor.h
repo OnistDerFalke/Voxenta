@@ -3,6 +3,7 @@
 
 #include "voxenta/node_editor/graph.h"
 #include "voxenta/effects/effect.h"
+#include "voxenta/windows/image_viewer.h"
 
 #include <memory>
 #include <string>
@@ -46,8 +47,6 @@ private:
     int add_node(effect& fx, ImVec2 screen_pos);
     void remove_node(int node_id);
     void update_node_thumbnail(ui_node& node);
-    void show_image_viewer();
-    void update_viewer_texture(const cv::Mat& img);
 
     bool resolve_attr(int attr_id, attr_info& out) const;
     bool find_ui_node(int node_id, ui_node** out);
@@ -65,14 +64,8 @@ private:
     std::vector<int> selected_nodes_;
     int hovered_node_id_ = -1;
 
-    bool viewer_open_ = false;
     int viewer_node_id_ = -1;
-    void* viewer_texture_ = nullptr;
-    int viewer_tex_w_ = 0;
-    int viewer_tex_h_ = 0;
-    float viewer_zoom_ = 1.0f;
-    ImVec2 viewer_pan_ = ImVec2(0.0f, 0.0f);
-    bool viewer_fit_pending_ = false;
+    image_viewer viewer_;
 
     ImNodesMiniMapLocation minimap_location_;
     float ui_scale_ = 1.0f;

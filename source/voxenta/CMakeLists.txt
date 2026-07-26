@@ -3,10 +3,11 @@
         src/main.cpp
 
         src/windows/about_window.cpp
+        src/windows/image_viewer.cpp
         src/windows/main_window.cpp
         src/windows/properties_window.cpp
         src/node_editor/node_editor.cpp
-)
+ "include/voxenta/windows/image_viewer.h" "src/windows/image_viewer.cpp")
 
 target_include_directories(voxenta PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
