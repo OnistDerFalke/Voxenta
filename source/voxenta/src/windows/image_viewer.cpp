@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <utility>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -9,6 +10,60 @@
 #endif
 
 #include <GL/gl.h>
+
+image_viewer::~image_viewer()
+{
+    release_texture();
+}
+
+image_viewer::image_viewer(image_viewer&& other) noexcept
+    : open_(other.open_)
+    , fit_pending_(other.fit_pending_)
+    , texture_id_(other.texture_id_)
+    , tex_w_(other.tex_w_)
+    , tex_h_(other.tex_h_)
+    , cached_source_(std::move(other.cached_source_))
+    , cached_pixelated_(other.cached_pixelated_)
+    , zoom_(other.zoom_)
+    , pan_(other.pan_)
+    , pixelated_(other.pixelated_)
+{
+    other.texture_id_ = 0;
+}
+
+image_viewer& image_viewer::operator=(image_viewer&& other) noexcept
+{
+    if (this != &other) {
+        release_texture();
+
+        open_ = other.open_;
+        fit_pending_ = other.fit_pending_;
+        texture_id_ = other.texture_id_;
+        tex_w_ = other.tex_w_;
+        tex_h_ = other.tex_h_;
+        cached_source_ = std::move(other.cached_source_);
+        cached_pixelated_ = other.cached_pixelated_;
+        zoom_ = other.zoom_;
+        pan_ = other.pan_;
+        pixelated_ = other.pixelated_;
+
+        other.texture_id_ = 0;
+    }
+    return *this;
+}
+
+void image_viewer::release_texture()
+{
+    if (texture_id_ != 0) {
+        const GLuint id = static_cast<GLuint>(texture_id_);
+        glDeleteTextures(1, &id);
+        texture_id_ = 0;
+        tex_w_ = 0;
+        tex_h_ = 0;
+    }
+    cached_source_ = cv::Mat();
+    cached_pixelated_ = false;
+}
 
 void image_viewer::open()
 {
@@ -20,6 +75,24 @@ void image_viewer::update_texture(const cv::Mat& img)
 {
     if (img.empty())
         return;
+
+    const bool same_content =
+        texture_id_ != 0 &&
+        img.data == cached_source_.data &&
+        img.cols == cached_source_.cols &&
+        img.rows == cached_source_.rows &&
+        img.type() == cached_source_.type();
+
+    if (same_content) {
+        if (pixelated_ != cached_pixelated_) {
+            const GLint filter = pixelated_ ? GL_NEAREST : GL_LINEAR;
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture_id_));
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+            cached_pixelated_ = pixelated_;
+        }
+        return;
+    }
 
     constexpr int kMaxViewerDim = 2048;
     cv::Mat resized;
@@ -45,14 +118,12 @@ void image_viewer::update_texture(const cv::Mat& img)
     else
         cv::cvtColor(resized, rgb, cv::COLOR_BGR2RGB);
 
-    GLuint texture;
-    if (texture_ == nullptr) {
+    if (texture_id_ == 0) {
+        GLuint texture = 0;
         glGenTextures(1, &texture);
-        texture_ = reinterpret_cast<void*>(static_cast<intptr_t>(texture));
+        texture_id_ = texture;
     }
-    else {
-        texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(texture_));
-    }
+    const GLuint texture = static_cast<GLuint>(texture_id_);
 
     const GLint filter = pixelated_ ? GL_NEAREST : GL_LINEAR;
 
@@ -64,6 +135,9 @@ void image_viewer::update_texture(const cv::Mat& img)
 
     tex_w_ = rgb.cols;
     tex_h_ = rgb.rows;
+
+    cached_source_ = img;
+    cached_pixelated_ = pixelated_;
 }
 
 void image_viewer::show(const cv::Mat& image)
@@ -72,8 +146,6 @@ void image_viewer::show(const cv::Mat& image)
         ImGui::OpenPopup("Image Viewer");
         open_ = false;
     }
-
-    update_texture(image);
 
     const ImVec2 display_size = ImGui::GetIO().DisplaySize;
     const ImVec2 viewer_size(display_size.x * 0.68f, display_size.y * 0.78f);
@@ -85,6 +157,8 @@ void image_viewer::show(const cv::Mat& image)
     bool close_requested = false;
     if (ImGui::BeginPopupModal("Image Viewer", nullptr,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar)) {
+
+        update_texture(image);
 
         ImGui::SetWindowFontScale(0.8f);
         ImGui::TextUnformatted("Image Viewer");
@@ -120,7 +194,7 @@ void image_viewer::show(const cv::Mat& image)
         ImGui::Separator();
         ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
-        if (image.empty() || texture_ == nullptr) {
+        if (image.empty() || texture_id_ == 0) {
             ImGui::TextDisabled("No image");
         }
         else {
@@ -190,7 +264,7 @@ void image_viewer::show(const cv::Mat& image)
             const ImVec2 center(canvas_size.x * 0.5f + pan_.x, canvas_size.y * 0.5f + pan_.y);
             const ImVec2 top_left(center.x - draw_w * 0.5f, center.y - draw_h * 0.5f);
 
-            ImGui::GetWindowDrawList()->AddImage(texture_,
+            ImGui::GetWindowDrawList()->AddImage(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture_id_)),
                 ImVec2(canvas_window_pos.x + top_left.x, canvas_window_pos.y + top_left.y),
                 ImVec2(canvas_window_pos.x + top_left.x + draw_w, canvas_window_pos.y + top_left.y + draw_h));
 

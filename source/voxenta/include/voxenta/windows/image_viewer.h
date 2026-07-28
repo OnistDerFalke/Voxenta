@@ -7,6 +7,12 @@
 class image_viewer {
 public:
     image_viewer() = default;
+    ~image_viewer();
+
+    image_viewer(const image_viewer&) = delete;
+    image_viewer& operator=(const image_viewer&) = delete;
+    image_viewer(image_viewer&& other) noexcept;
+    image_viewer& operator=(image_viewer&& other) noexcept;
 
     void open();
     bool is_open() const { return open_; }
@@ -14,13 +20,16 @@ public:
 
 private:
     void update_texture(const cv::Mat& img);
+    void release_texture();
 
     bool open_ = false;
     bool fit_pending_ = false;
 
-    void* texture_ = nullptr;
+    unsigned int texture_id_ = 0;
     int tex_w_ = 0;
     int tex_h_ = 0;
+    cv::Mat cached_source_;
+    bool cached_pixelated_ = false;
 
     float zoom_ = 1.0f;
     ImVec2 pan_ = ImVec2(0.0f, 0.0f);

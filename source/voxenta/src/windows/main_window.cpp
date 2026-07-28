@@ -155,40 +155,42 @@ main_window::main_window() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    //Creating sub-windows in main window
-    auto propertiesWindow = properties_window(get_window_size(window));
-
-    //Main loop
-    while (!glfwWindowShouldClose(window))
     {
-        glfwPollEvents();
+        //Creating sub-windows in main window
+        auto propertiesWindow = properties_window(get_window_size(window));
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        //Main loop
+        while (!glfwWindowShouldClose(window))
+        {
+            glfwPollEvents();
 
-        //Resizing windows on update
-        if (window_resized(window)) {
-            propertiesWindow.set_mws(get_window_size(window));
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            //Resizing windows on update
+            if (window_resized(window)) {
+                propertiesWindow.set_mws(get_window_size(window));
+            }
+
+            //Saving latest size and storing flags
+            latest_size = get_window_size(window);
+            latest_maximize_flag = win_prop::window_resized;
+
+            //Showing updated windows
+            propertiesWindow.show();
+
+            //Rendering
+            ImGui::Render();
+            int display_w, display_h;
+            glfwGetFramebufferSize(window, &display_w, &display_h);
+            glViewport(0, 0, display_w, display_h);
+            ImVec4 clear_color = ImColor(60, 60, 60);
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+            glClear(GL_COLOR_BUFFER_BIT);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            glfwSwapBuffers(window);
         }
-
-        //Saving latest size and storing flags
-        latest_size = get_window_size(window);
-        latest_maximize_flag = win_prop::window_resized;
-
-        //Showing updated windows
-        propertiesWindow.show();
-
-        //Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        ImVec4 clear_color = ImColor(60, 60 , 60);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        glfwSwapBuffers(window);
     }
 
     //Cleanup
