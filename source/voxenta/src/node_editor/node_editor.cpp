@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
 
 #ifdef _WIN32
@@ -363,24 +364,82 @@ void node_editor::show()
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
         if (open_popup)
         {
-            if (node_hovered)
+            if (node_hovered) {
                 ImGui::OpenPopup("node context");
-            else
+            }
+            else {
+                add_node_search_[0] = '\0';
+                add_node_focus_search_ = true;
                 ImGui::OpenPopup("add node");
+            }
         }
 
         if (ImGui::BeginPopup("add node"))
         {
             const ImVec2 click_pos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-            for (auto& effect_ref : effect_manager::effects()) {
-                if (effect_ref.get().is_internal_node())
-                    continue;
-                if (ImGui::MenuItem(effect_ref.get().get_name())) {
-                    add_node(effect_ref.get(), click_pos);
+            if (add_node_focus_search_) {
+                ImGui::SetKeyboardFocusHere();
+                add_node_focus_search_ = false;
+            }
+            ImGui::SetNextItemWidth(220.0f);
+            ImGui::InputTextWithHint("##node_search", "Search nodes...",
+                add_node_search_, IM_ARRAYSIZE(add_node_search_));
+
+            ImGui::Separator();
+            ImGui::BeginChild("node_search_results", ImVec2(220.0f, 280.0f), false);
+
+            std::string query = add_node_search_;
+            std::transform(query.begin(), query.end(), query.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+            if (query.empty()) {
+                static const char* categories[] = { "Inputs", "Outputs", "Effects", "Variables" };
+
+                for (const char* category : categories) {
+                    bool any_in_category = false;
+                    for (auto& fx : effect_manager::effects()) {
+                        if (!fx.get().is_internal_node() && std::strcmp(fx.get().get_category(), category) == 0) {
+                            any_in_category = true;
+                            break;
+                        }
+                    }
+                    if (!any_in_category)
+                        continue;
+
+                    if (ImGui::TreeNodeEx(category, ImGuiTreeNodeFlags_DefaultOpen)) {
+                        for (auto& fx : effect_manager::effects()) {
+                            if (fx.get().is_internal_node() || std::strcmp(fx.get().get_category(), category) != 0)
+                                continue;
+                            if (ImGui::Selectable(fx.get().get_name())) {
+                                add_node(fx.get(), click_pos);
+                                ImGui::CloseCurrentPopup();
+                            }
+                        }
+                        ImGui::TreePop();
+                    }
+                }
+            }
+            else {
+                for (auto& fx : effect_manager::effects()) {
+                    if (fx.get().is_internal_node())
+                        continue;
+
+                    std::string name = fx.get().get_name();
+                    std::transform(name.begin(), name.end(), name.begin(),
+                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+                    if (name.find(query) == std::string::npos)
+                        continue;
+
+                    if (ImGui::Selectable(fx.get().get_name())) {
+                        add_node(fx.get(), click_pos);
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
             }
 
+            ImGui::EndChild();
             ImGui::EndPopup();
         }
 

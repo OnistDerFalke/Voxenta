@@ -2,12 +2,13 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <GL/gl.h>
 
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
 #endif
+
+#include <GL/gl.h>
 
 void image_viewer::open()
 {

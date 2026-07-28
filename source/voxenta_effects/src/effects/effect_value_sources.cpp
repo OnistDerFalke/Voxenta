@@ -8,6 +8,7 @@ class effect_float_source final : public effect_clonable<effect_float_source> {
     float m_range_max = 0.0f;
 public:
     const char* get_name() override { return "Float"; }
+    const char* get_category() const override { return "Variables"; }
     const char* get_description() override
     {
         return "Outputs a float value that can drive other nodes' parameters. "
@@ -42,6 +43,7 @@ class effect_int_source final : public effect_clonable<effect_int_source> {
     float m_range_max = 0.0f;
 public:
     const char* get_name() override { return "Int"; }
+    const char* get_category() const override { return "Variables"; }
     const char* get_description() override
     {
         return "Outputs an integer value that can drive other nodes' parameters. "
@@ -74,6 +76,7 @@ class effect_bool_source final : public effect_clonable<effect_bool_source> {
     bool m_value = false;
 public:
     const char* get_name() override { return "Bool"; }
+    const char* get_category() const override { return "Variables"; }
     const char* get_description() override { return "Outputs a constant boolean value that can drive other nodes' parameters."; }
     std::vector<pin_info> inputs()  const override { return {}; }
     std::vector<pin_info> outputs() const override { return { { "Value", pin_type::bool_value } }; }

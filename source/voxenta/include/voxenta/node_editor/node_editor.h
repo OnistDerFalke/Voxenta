@@ -64,6 +64,9 @@ private:
     std::vector<int> selected_nodes_;
     int hovered_node_id_ = -1;
 
+    char add_node_search_[128] = {};
+    bool add_node_focus_search_ = false;
+
     int viewer_node_id_ = -1;
     image_viewer viewer_;
 

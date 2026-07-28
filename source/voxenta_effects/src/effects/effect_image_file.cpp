@@ -8,6 +8,7 @@ class effect_image_file final : public effect_clonable<effect_image_file> {
 
 public:
     const char* get_name() override { return "Load Image"; }
+    const char* get_category() const override { return "Inputs"; }
     const char* get_description() override
     {
         return "Loads a chosen image from disk and outputs it. Use this to bring "

@@ -71,6 +71,7 @@ public:
     virtual std::vector<pin_info> outputs() const { return { { "Image", pin_type::image } }; }
 
     virtual bool is_internal_node() const { return false; }
+    virtual const char* get_category() const { return "Effects"; }
     virtual std::vector<pin_value> run(const std::vector<pin_value>& inputs) = 0;
     virtual std::unique_ptr<effect> clone() const = 0;
     virtual void set_external_image(const cv::Mat&) {}

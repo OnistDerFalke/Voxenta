@@ -8,6 +8,7 @@ class effect_save_image final : public effect_clonable<effect_save_image> {
 
 public:
     const char* get_name() override { return "Save Image"; }
+    const char* get_category() const override { return "Outputs"; }
     const char* get_description() override
     {
         return "Saves the connected image to disk. Click Save to pick a "
